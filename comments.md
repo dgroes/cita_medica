@@ -38,4 +38,3 @@ Los pasos de la instalación para la creación del proyecto son:
 ➜ npm install && npm run build
 ➜ composer run dev
  ```
-

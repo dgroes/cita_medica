@@ -1,3 +1,5 @@
+{{-- C09: Componente con clase --}}
+{{-- C16: @Props --}}
 @props([
     'title' => config('app.name', 'Laravel'),
     'breadcrumbs' => [],
@@ -16,11 +18,14 @@
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
-    <!-- Scripts -->
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-
     {{-- Font Awesome 🏳️ --}}
     <script src="https://kit.fontawesome.com/335ff06f37.js" crossorigin="anonymous"></script>
+
+    {{-- WireUI --}}
+    @wireUiScripts
+
+    <!-- AlPine:Scripts -->
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <!-- Styles -->
     @livewireStyles
@@ -28,6 +33,7 @@
 
 <body class="font-sans antialiased">
 
+     {{-- C10: Estrucura de las view/routes/controller/layouts/etc --}}
     @include('layouts.includes.admin.navigation')
     @include('layouts.includes.admin.sidebar')
 

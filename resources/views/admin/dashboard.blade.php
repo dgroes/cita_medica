@@ -1,6 +1,4 @@
-<x-admin-layout
-title="Dashboard | Citas médicas"
-:breadcrumbs="[
+<x-admin-layout title="Dashboard | Citas médicas" :breadcrumbs="[
     [
         'name' => 'Dashboard',
         'href' => route('admin.dashboard'),
@@ -9,6 +7,9 @@ title="Dashboard | Citas médicas"
         'name' => 'Prueba',
     ],
 ]">
-SFDASDFd
-    HOLA DESDE EL ADMIN
+    <x-slot name="action">
+        hoaldfj
+    </x-slot>
+
+    <h1 class="text-xl">Hola desde Admin</h1>
 </x-admin-layout>

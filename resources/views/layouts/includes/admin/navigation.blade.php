@@ -13,8 +13,8 @@
                             </path>
                         </svg>
                     </button>
-                    <a href="/" class="flex ms-2 md:me-24">
-                        <img src="https://flowbite.com/docs/images/logo.svg" class="h-8 me-3" alt="FlowBite Logo" />
+                    <a href="/" class="flex ms-2 md:me-24 items-center">
+                        <i class="pr-2 fa-solid fa-hospital text-xl text-white"></i>
                         <span
                             class="self-center text-xl font-semibold sm:text-2xl whitespace-nowrap dark:text-white">Citas Médicas</span>
                     </a>

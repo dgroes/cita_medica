@@ -6,6 +6,7 @@ use Closure;
 use Illuminate\Contracts\View\View;
 use Illuminate\View\Component;
 
+/* C09: Componente con clase */
 class AdminLayout extends Component
 {
     /**

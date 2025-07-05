@@ -65,6 +65,7 @@ return [
     |
     */
 
+    /* C05: Zona Horaria */
     'timezone' => 'America/Santiago',
 
     /*

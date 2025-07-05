@@ -56,7 +56,7 @@ return [
     | these features or you can even remove all of these if you need to.
     |
     */
-
+    /* C04: Imagen de Usuario */
     'features' => [
         // Features::termsAndPrivacyPolicy(),
         Features::profilePhotos(),

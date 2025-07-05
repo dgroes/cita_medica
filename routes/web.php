@@ -2,9 +2,12 @@
 
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
+/* Route::get('/', function () {
     return view('welcome');
-});
+}); */
+
+// Redirección a la ruta admintrador
+Route::redirect('/', 'admin');
 
 Route::middleware([
     'auth:sanctum',

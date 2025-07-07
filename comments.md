@@ -174,7 +174,27 @@ INFO  Running migrations.
 ```
 
 Una de las formas además de utilizar **Tinker** para la gestión de la BD, y es el caso que se utilzará en el desarrollo del proyecto es la extención de vscode [MySQL Database Client](https://database-client.com/)
-##C
+### Permiso de Llaves foráneas
+En la instalación de Laravel Permission apareció este error:
+```bash
+SQLSTATE[42000]: Syntax error or access violation: 1142 REFERENCES command denied to user 'citas_user'@'localhost' for table 'citas_medicas.permissions'
+```
+El usuario `citas_user` no tiene los permisos suficientes para crear las clavez foráneas(`FOREIGN KEY`) Y Laravel Permission usa relaciones foráneas en sus migraciones(`model_has_permissions`, `model_has_roles`, etc). 
+
+Para solucionkarlo se deberá dar los permisos necesarios en MySQL, especialmente, `REFERENCES`.:
+```SQL
+mysql -u root -p /* <-- Conectase a la MySQL como root */
+
+GRANT ALL PRIVILEGES ON citas_medicas.* TO 'citas_user'@'localhost';
+FLUSH PRIVILEGES; /* <-- Comando para otorgar todos los privilegios sobre la BD `citas_medicas` al usuario `citas_user` */
+
+EXIT;
+```
+Luego faltaría correr la migraciones para saber si todo funcionó:
+```bash
+php artisan migrate:fresh --seed
+```
+
 ## C03: Laravel Lang (español)
 Una caracteristica de Laravel pero opcional, es traducir la app, para eso está [Laravel Lang](https://laravel-lang.com/basic-usage.html).
 **Laravel Lang** es una colección de paquetes de traducción que amplían el soporte de idiomas en Laravel.
@@ -533,7 +553,67 @@ Después de realizar el cambio, es fundamental limpiar la caché de Laravel para
 php artisan optimize:clear
 ```
 Este comando borra el caché de configuración, rutas, vistas y otros archivos compilados por Laravel.
-## C19:
+## C19: Rappasoft 
+**Rappasoft** es una organización/desarrollador que ofrece **paquetes y recursos avanzados para Laravel** especialmente enfocados en **boilerplates** y **starters** para construir aplicaciones administrativas.
+### Laravel Livewire Tables 📦
+Enlace a la documentación: -> [Documentación Livewire Table](https://rappasoft.com/docs/laravel-livewire-tables/v3/introduction).
+Es un paquete que permite construir **tablas interactivas** fácilmente en Laravel con:
+- Búsqueda en tiempo real
+- Ordenamiento de columnas
+- Paginación automática
+- Filtros dinámicos
+- Acciones por fila (editar, eliminar, etc.)
+- Soporte para relaciones Eloquent
+Todo esto sin **necesidad de JavaScript personalizado**, gracias a que está basado en Livewire
+
+### Instalación:
+```bash
+❯ composer require rappasoft/laravel-livewire-tables
+
+php artisan vendor:publish --provider="Rappasoft\LaravelLivewireTables\LaravelLivewireTablesServiceProvider" --tag=livewire-tables-config
+
+❯ php artisan vendor:publish --provider="Rappasoft\LaravelLivewireTables\LaravelLivewireTablesServiceProvider" --tag=livewire-tables-translations
+```
+El segundo comando lo que hace es publicar la configuración del paquete. en dicha configuración permite personalizar el comportamiento global del paquete, como:
+- Estilo de los componentes (Tailwind, Bootstrap, etc.)
+- Ubicación de vistas
+- Componente de paginación
+- Prefijos de columnas
+- Vista por defecto de botones, filtros, etc.
+El tercer comando publica las traducciones, lo que permite traducir o personalizar los textos que se muestran en la tablas como: 
+- "Search"
+- "No results"
+- "Showing x to y of z results"
+- Botones: "Edit", "Delete", etc.
+
+Y para que todo funcione bien, en el fichero `tailwind.config.js`, se deberá agregar en `content` lo siguiente:
+```css
+'./vendor/rappasoft/laravel-livewire-tables/resources/views/**/*.blade.php'
+```
+
+| Comando                              | ¿Qué hace?                                         | ¿Para qué sirve?                   |
+| ------------------------------------ | -------------------------------------------------- | ---------------------------------- |
+| `--tag=livewire-tables-config`       | Copia el archivo `config/livewire-tables.php`      | Personalizar configuración global  |
+| `--tag=livewire-tables-translations` | Copia traducciones a `lang/vendor/livewire-tables` | Personalizar o traducir los textos |
+## C20: Laravel Permission
+>Importante tener en cuenta lo comentado de `C02` en la sección de "Permiso de llaves foráneas". Ya que va vinculado a este comentario extenso, en caso de tener error al correr las migraciones luego de instalar Laravel Permission
+**Laravel Permission es un paquete Laravel que permite agregar roles y permisos** a los usuarios de forma sencilla y robusta. Con el se puede:
+- Asiganr roles a usuarios (ej: `admin`, `editor`, `client`, etc)
+- Asignar permisos (ej: `ver post`, `editar usuarios`)
+- Contraolar el acceso con middleware como: `Route::get('/admin', fn() => 'Solo admins')->middleware('role:admin');`
+- Verificar permisso con métodos como: `$user->hasRole('admin');` o `$user->can('editar post');`
+### Instalación
+Dentro de la [documentación oficial](https://spatie.be/docs/laravel-permission/v6/installation-laravel) estarán los pasos y otra información imporntante.
+```php
+ composer require spatie/laravel-permission   /* <--- Instalación de paquete */
+
+php artisan vendor:publish --provider="Spatie\Permission\PermissionServiceProvider" /*  */
+```
+Luego antes de realizar las migraciones de las nuevas tablas creadas, es importante ejecutar `php artisan optimize:clear`, luego bastará con correr las migraciones: `php artisan migrate` o ` php artisan migrate:fresh`.
+
+Y lo úlitmo sería agregar el trait: ` use HasRoles;` en el modelo de `User`
+
+## 
 ##
 ##
 ##

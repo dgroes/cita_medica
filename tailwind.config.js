@@ -19,6 +19,7 @@ export default {
         "./vendor/wireui/wireui/src/WireUi/**/*.php",
         "./vendor/wireui/wireui/src/Components/**/*.php",
 
+        /* C19: Rappasofts */
         /* Rappasoft: Livewire Tables */
         './vendor/rappasoft/laravel-livewire-tables/resources/views/**/*.blade.php',
 

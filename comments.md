@@ -612,9 +612,67 @@ php artisan vendor:publish --provider="Spatie\Permission\PermissionServiceProvid
 Luego antes de realizar las migraciones de las nuevas tablas creadas, es importante ejecutar `php artisan optimize:clear`, luego bastará con correr las migraciones: `php artisan migrate` o ` php artisan migrate:fresh`.
 
 Y lo úlitmo sería agregar el trait: ` use HasRoles;` en el modelo de `User`
+## C21: Semillas (Role)
+Para crear un fichero de semilla para Roles, bastará con el comando: `php artisan make:seeder RoleSeeder`, luego dentro de Role se establecieron los roles necesarios para el sistema de Gestión de Consultas Médicas. Luego dentro de `database/seeders/DatabaseSeeder.php` se deberá llamar con `$this->call()` a la semilla de Role: 
+```php
+$this->call([
+            RoleSeeder::class,
+           
+        ]);
+```
+**Importante:**
+dentro de la semilla de rol (`database/seeders/RoleSeeder.php`) en la parte del foreach:
+```php
+foreach ($roles as $role) {
+            Role::create([ /* <-- este model de rol */
+                'name' => $role
+            ]);
+        }
+``` 
+Ese modelo de `Role::` deberá ser sacado de Laravel Permission, es decir que se deberá importar:
+```php
+use Spatie\Permission\Models\Role;
+```
+## C22: Ruta para los roles (Route::resource):
+Antes de crear las rutas el falta un controller para **Role**, para crearlo bastará en la terminal con el comando: ` php artisan make:controller Admin/RoleController -r`. con el `Admin/` además de crear la ruta, creará el fichero dentro de esa ruta, para mantener un control más organizado.
+El `-r` es para que dentro del controlador se creen los métodos tipicos de para un CRUD, es decir:
+```php
+public function index()    // Listar todos los roles
+public function create()   // Mostrar formulario de creación
+public function store(Request $request)   // Guardar nuevo rol
+public function show($id)  // Mostrar un rol en detalle
+public function edit($id)  // Mostrar formulario de edición
+public function update(Request $request, $id)  // Actualizar rol
+public function destroy($id)  // Eliminar rol
+```
+Además en `routes/admin.php` se deberá agregar lo siguiente:
+```php
+Route::resource('roles', RoleController::class);
+```
+En Laravel con `::resource` hace que se generen todas las rutas clasicas, esto se llama rutas `RESTful`, el cual genera en este caso:
+- `GET /roles` → index
+- `GET /roles/create` → create
+- `POST /roles` → store
+- `GET /roles/{id}` → show
+- `GET /roles/{id}/edit` → edit
+- `PUT/PATCH /roles/{id}` → update
+- `DELETE /roles/{id}` → destroy
+Un ejemplo de su uso está está en `resources/views/layouts/includes/admin/sidebar.blade.php`, dentro del array de `$links` está:
+```js
+    'name' => 'Roles y Permisos',
+    'icon' => 'fa-solid fa-shield-halved',
+    'href' => route('admin.roles.index'),
+    'active' => request()->routeIs('admin.roles'),...
+```
+Pues ahí en `href`, se llama a la ruta `index` que está dentro de el grupo de ruta `admin` con `roles`, pues al usar `Route::resource('roles', RoleController::class);` como se mencionó, esto ya crea las rutas necesarias, en dicho caso hace uso de`GET /roles -> index`, el cual en el controller de Roles(`Controllers/Admin/RoleController.php`) está definido aquí:
+```php
+public function index()
+    {
+        return view('admin.roles.index');
+    }
+```
+el cual la view que llama está dentro de la ruta `admin/roles` y el fichero `index`, es decir: `resources/views/admin/roles/index.blade.php`.
 
-## 
-##
 ##
 ##
 ##

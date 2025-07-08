@@ -11,6 +11,7 @@ class RoleSeeder extends Seeder
     /**
      * Run the database seeds.
      */
+    /* C21: Semillas (Role) */
     public function run(): void
     {
         $roles = [

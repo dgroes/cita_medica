@@ -30,7 +30,14 @@ class RoleController extends Controller
      */
     public function store(Request $request)
     {
+        /* C24: Creación de un nuevo registo */
+        $request->validate([
+            'name' => 'required|string|max:50|unique:roles,name',
+        ]);
 
+        Role::create(['name' => $request->name]);
+
+        return redirect()->route('admin.roles.index');
     }
 
     /**

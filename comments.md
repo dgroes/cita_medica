@@ -194,7 +194,6 @@ Luego faltaría correr la migraciones para saber si todo funcionó:
 ```bash
 php artisan migrate:fresh --seed
 ```
-
 ## C03: Laravel Lang (español)
 Una caracteristica de Laravel pero opcional, es traducir la app, para eso está [Laravel Lang](https://laravel-lang.com/basic-usage.html).
 **Laravel Lang** es una colección de paquetes de traducción que amplían el soporte de idiomas en Laravel.
@@ -672,9 +671,85 @@ public function index()
     }
 ```
 el cual la view que llama está dentro de la ruta `admin/roles` y el fichero `index`, es decir: `resources/views/admin/roles/index.blade.php`.
+## C23: Tabla de roles (Laravel Livewire Table, "Table DSL")
+Anteriormente en `C19` se instalaó [Laravel Livewire Tables](https://rappasoft.com/docs/laravel-livewire-tables/v3/introduction). Ahora se hace su uso.
+En la terminal se deberá añadir el siguiente comando:
+```bash
+php artisan make:datatable Admin/Datatables/RoleTable
 
-##
-##
+ ┌ What is the name of the model you want to use in this table? ┐
+ │ User                                                         │
+ └──────────────────────────────────────────────────────────────┘
+```
+Luego del primer comando, preguntará el nombre del model en el cual se deberá basar la tabla, de momento se utilizará User, **ya el el model de Role está con LaravelPermission**, luego se cambiará eso.
+Entonces generará el fichero: `app/Livewire/Admin/Datatables/RoleTable.php`. Ahora si se deberá cambiar el modelo:
+`protected $model = User::class;`, por:`protected $model = Role::class;`, además de añadir el import: `use Spatie\Permission\Models\Role`.
+
+Laravel Livewire Table su uso está inspirado en una idea llamada "**Table DSL**" (Domain Specific Language), donde se definen las columnas y configuración en un array de PHP estrucurado. Esto hace que sea **muy declarativo y legible**. 
+*FilamentPHP tambien está basado en DLS*
+
+Entonces con "Laravel Livewire Tables", dentro el fichero `app/Livewire/Admin/Datatables/RoleTable.php` para definir la estrucura de las tablas, será importante trabajar con **métodos encadenables**, es decir: `->sortable(),`, `->searchable(),`, etc.
+## C24: Creación de un nuevo registo
+Para crear por ejemplo un nuevo **Rol** será importante tener lo siguiente
+Dentro del fichero: `resources/views/admin/roles/create.blade.php`, está lo siguiente:
+```php
+<x-wire-card>
+        <form action="{{ route('admin.roles.store') }}" method="POST">
+            @csrf
+            <x-wire-input
+                label="Nombre" name="name" placeholder="Nombre del rol" value="{{ old('name') }}"
+
+                />
+                <div class="flex justify-end mt-4">
+                    <x-wire-button type="submit" blue >
+                        Guardar
+                    </x-wire-button>
+                </div>
+
+        </form>
+    </x-wire-card>
+```
+- `<x-wire-card>`: Componente de WireUI
+- `@csrf`: Encriptación segura de los datos enviados a la BD
+- `value="{{ old('name') }}"`: En caso que no funcione el **CREATE** al recargar la view, recupera el último dato introducido en el input
+- `action="{{ route('admin.roles.store') }}"`: Establecer la ruta a la cual se le pasaran los datos, en este caso se hará uso del método `store` del controller de Roles(`app/Http/Controllers/Admin/RoleController.php`)
+Luego en `RoleController.php` en `store` deberá estar lo siguiente:
+```php
+public function store(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:50|unique:roles,name',
+        ]);
+
+        Role::create(['name' => $request->name]);
+
+        return redirect()->route('admin.roles.index');
+    }
+```
+Define un método público llamado `store`, que recibe una instancia de `Request` (contiene todos los datos del formulario enviado por POST).  
+Este método es parte del **CRUD**, y se encarga de **guardar un nuevo rol** en la base de datos.
+
+```php
+$request->validate([
+    'name' => 'required|string|max:50|unique:roles,name',
+]);
+```
+Valida los datos recibidos del formulario, asegurándose de que:
+- 'name' esté presente (required)
+- Sea una cadena de texto (string) 
+- Tenga un máximo de 50 caracteres (max:50) 
+- Sea único en la columna name de la tabla roles (unique:roles,name)
+Si la validación falla, Laravel **redirecciona automáticamente de vuelta** con los errores y no ejecuta el resto del método.
+
+```php
+Role::create(['name' => $request->name]);
+```
+**Crea un nuevo registro en la tabla `roles`** usando el modelo `Role` (de `Spatie\Permission\Models\Role`), con el campo `name` que viene desde el formulario.
+Este método hace internamente un `INSERT INTO roles (name) VALUES (...)`.
+>Será importante asegúrate de que el modelo `Role` tenga habilitada la asignación masiva para ese campo (`fillable`).
+
+---
+
 ##
 ##
 ##

@@ -1,11 +1,11 @@
 <x-admin-layout title="Roles | CitasMédicas" :breadcrumbs="[
     [
         'name' => 'Dashboard',
-        'route' => route('admin.dashboard'),
+        'href' => route('admin.dashboard'),
     ],
     [
         'name' => 'Roles',
-        'route' => route('admin.roles.index'),
+        'href' => route('admin.roles.index'),
     ],
     [
         'name' => 'Editar',

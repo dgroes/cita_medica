@@ -749,8 +749,31 @@ Este método hace internamente un `INSERT INTO roles (name) VALUES (...)`.
 >Será importante asegúrate de que el modelo `Role` tenga habilitada la asignación masiva para ese campo (`fillable`).
 
 ---
+## C25: Uso de Slot
+Dentro del fihcero `resources/views/layouts/admin.blade.php` ya previamente se añadio lo siguiente:
+```php
+ @isset($action)
+                <div class="ml-auto">
+                    {{ $action }}
+                </div>
+            @endisset
+```
+Entonces "si existe **$action** que lo muestre", ahora se hace uso de ello. Dentro del `resources/views/admin/dashboard.blade.php` está:
+```php
+<x-slot name="action"> </x-slot>
+```
+Aquí se define un slot llamado `action`, que puede ser rellenado por cualquier contenido Blade.En este caso, está vacío y sirve como marcador para ser completado desde una vista hija.
 
-##
+Entonces dentro de ese `slot` estará lo siguiente, dentro del fichero `resources/views/admin/roles/index.blade.php` está lo siguiente:
+```php
+<x-slot name="action">
+        <x-wire-button blue href="{{ route('admin.roles.create') }}" xs>
+            <i class="fa-solid fa-plus"></i>
+            Nuevo
+        </x-wire-button>
+</x-slot>
+```
+Esta sección completa el slot `action` definido en la plantilla padre. Se utiliza el componente de WireUI `x-wire-button` para renderizar un botón que enlaza a la ruta `admin.roles.create`. Esto es útil para agregar acciones contextuales(como "Nuevo registro") en la interfaz de administración.
 ##
 ##
 ##

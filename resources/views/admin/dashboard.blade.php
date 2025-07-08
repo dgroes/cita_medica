@@ -8,7 +8,7 @@
     ],
 ]">
     <x-slot name="action">
-        hoaldfj
+
     </x-slot>
 
     <h1 class="text-xl">Hola desde Admin</h1>

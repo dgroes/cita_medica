@@ -9,9 +9,16 @@
             'active' => request()->routeIs('admin.dashboard'),
         ],
         [
-            'header' => 'Administrar Página',
+            'header' => 'Gestión',
         ],
         [
+            'name' => 'Roles y Permisos',
+            'icon' => 'fa-solid fa-shield-halved',
+            'href' => route('admin.roles.index'),
+            'active' => request()->routeIs('admin.roles'),
+
+        ]
+        /* [
             'name' => 'Dashboard',
             'icon' => 'fa-solid fa-chart-line',
             'href' => route('admin.dashboard'),
@@ -33,7 +40,7 @@
                     'active' => false,
                 ],
             ],
-        ],
+        ], */
     ];
 @endphp
 <aside id="logo-sidebar"

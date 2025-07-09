@@ -68,7 +68,19 @@ class RoleController extends Controller
      */
     public function update(Request $request, Role $role)
     {
-        //
+        $request->validate([
+            'name' => 'required|string|max:50|unique:roles,name,' . $role->id,
+        ]);
+
+        $role->update(['name' => $request->name]);
+
+        session()->flash('swal', [
+            'icon' => 'success',
+            'title' => 'Rol actualizado correctamente',
+            'text' => 'El rol ha sido actualizado exitosamente.',
+        ]);
+
+        return redirect()->route('admin.roles.edit', $role);
     }
 
     /**

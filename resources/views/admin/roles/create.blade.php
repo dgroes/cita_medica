@@ -11,6 +11,7 @@
         'name' => 'Nuevo',
     ],
 ]">
+    {{-- Formulario de creación, utilizando componente de wireUI --}}
     <x-wire-card>
         {{-- C24: Creación de un nuevo registo --}}
         <form action="{{ route('admin.roles.store') }}" method="POST">

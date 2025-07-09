@@ -88,6 +88,23 @@ class RoleController extends Controller
      */
     public function destroy(Role $role)
     {
-        //
+        /* if ($role->name === 'admin') {
+            session()->flash('swal', [
+                'icon' => 'error',
+                'title' => 'Error al eliminar el rol',
+                'text' => 'No se puede eliminar el rol "admin".',
+            ]);
+            return redirect()->route('admin.roles.index');
+        }
+ */
+        $role->delete();
+
+        session()->flash('swal', [
+            'icon' => 'success',
+            'title' => 'Rol eliminado correctamente',
+            'text' => 'El rol ha sido eliminado exitosamente.',
+        ]);
+
+        return redirect()->route('admin.roles.index');
     }
 }

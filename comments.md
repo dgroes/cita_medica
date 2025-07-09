@@ -774,7 +774,43 @@ Entonces dentro de ese `slot` estará lo siguiente, dentro del fichero `resource
 </x-slot>
 ```
 Esta sección completa el slot `action` definido en la plantilla padre. Se utiliza el componente de WireUI `x-wire-button` para renderizar un botón que enlaza a la ruta `admin.roles.create`. Esto es útil para agregar acciones contextuales(como "Nuevo registro") en la interfaz de administración.
-##
+## C26: SweetAlert2 (con Session->fash())
+Dentro del fichero `resources/views/layouts/admin.blade.php` se añade el `<script>` de [SweetAlert2](https://sweetalert2.github.io/#download). **SweetAlert2** es una biblioteca de JavaScript que permite crear ventanas emergentes personalizadas y atractivas en lugar de las alertas estándar de JavaScript.
+
+Ahora dentro del fichero `Admin/RoleController.php` en le método `store`, luego de la creación del registro de crea una sesión:
+```php
+session()->flash('swal', [
+            'icon' => 'success',
+            'title' => 'Rol creado correctamente',
+            'text' => 'El rol ha sido creado exitosamente.',
+        ]);
+```
+`session()->flash()` **sirve para almacenar temporalmente un dato en la sesión**, **solo durante la siguiente petición** (es decir, se borra automáticamente después de usarse una vez), ideal para mostrar mensaje como: 
+- Notificaciones de éxito (por ejemplo: "Usuario creado correctamente")
+- Alertas o errores
+- Mensajes de confirmación
+
+**Flash o Put?**
+Tambien existe `session()->put()`, con `put()`, el dato se mantendría en la sesion **hasta que se borre manualmente**, pero con `flash()` es temporal.
+
+Entonces de establecer que se guardará ese array temporalmente
+>la estrucura del array está basada en la estructura que debería tener un array para su uso con sweetAler2
+Dentro del fichero `admin.blade.php`, está el bloque si revisa si existe esa clave y dispara el arte, es decir la clave **"swal"**:
+```php
+@if (session('swal'))
+    <script>
+        Swal.fire(@json(session('swal')))
+    </script>
+@endif
+```
+El flujo general sería:
+- Se crea el `Rol` y se guarda un mensaje flash en la sesión.
+- Se redirige a `admin.roles.index`.
+- En esa vista se carga el layout, y si existe `session('swal')`, se genera el `Swal.fire(...).`
+- Se muestra la alerta.
+- Laravel elimina automáticamente ese valor flash de la sesión.
+
+
 ##
 ##
 ##

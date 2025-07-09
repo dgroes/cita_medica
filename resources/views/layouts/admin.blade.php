@@ -21,6 +21,10 @@
     {{-- Font Awesome 🏳️ --}}
     <script src="https://kit.fontawesome.com/335ff06f37.js" crossorigin="anonymous"></script>
 
+    {{-- ## C26: SweetAlert2 (con Session->fash()) --}}
+    {{-- SweetAlert2 --}}
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     {{-- WireUI --}}
     @wireUiScripts
 
@@ -33,7 +37,7 @@
 
 <body class="font-sans antialiased">
 
-     {{-- C10: Estrucura de las view/routes/controller/layouts/etc --}}
+    {{-- C10: Estrucura de las view/routes/controller/layouts/etc --}}
     @include('layouts.includes.admin.navigation')
     @include('layouts.includes.admin.sidebar')
 
@@ -57,6 +61,13 @@
 
     @livewireScripts
     <script src="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.js"></script>
+
+    {{-- C26: SweetAlert2 (con Session->fash()) --}}
+    @if (session('swal'))
+        <script>
+            Swal.fire(@json(session('swal')))
+        </script>
+    @endif
 </body>
 
 </html>

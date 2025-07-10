@@ -9,6 +9,7 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Jetstream\HasProfilePhoto;
 use Laravel\Sanctum\HasApiTokens;
+/* C28: Asignación de Rol a User con Laravel Permission */
 use Spatie\Permission\Traits\HasRoles; /* <-- par HasRoles de Laravel Permission */
 
 class User extends Authenticatable
@@ -33,6 +34,9 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'dni',
+        'phone',
+        'address',
     ];
 
     /**

@@ -60,6 +60,16 @@ class RoleController extends Controller
      */
     public function edit(Role $role)
     {
+        //Impedir que se puedan editar los roles por defecto de las seeds (admin, doctor, paciente, recepcionista)
+        if($role->name === 'Paciente' || $role->name === 'Doctor' || $role->name === 'Administrador' || $role->name === 'Recepcionista') {
+            session()->flash('swal', [
+                'icon' => 'error',
+                'title' => 'Error al editar el rol',
+                'text' => 'No se puede editar el rol "' . $role->name . '".',
+            ]);
+            return redirect()->route('admin.roles.index');
+        }
+
         return view('admin.roles.edit', compact('role'));
     }
 
@@ -88,15 +98,16 @@ class RoleController extends Controller
      */
     public function destroy(Role $role)
     {
-        /* if ($role->name === 'admin') {
+        //Impedir que se puedan editar los roles por defecto de las seeds (admin, doctor, paciente, recepcionista)
+        if($role->name === 'Paciente' || $role->name === 'Doctor' || $role->name === 'Administrador' || $role->name === 'Recepcionista') {
             session()->flash('swal', [
                 'icon' => 'error',
                 'title' => 'Error al eliminar el rol',
-                'text' => 'No se puede eliminar el rol "admin".',
+                'text' => 'No se puede eliminar el rol "' . $role->name . '".',
             ]);
             return redirect()->route('admin.roles.index');
         }
- */
+
         $role->delete();
 
         session()->flash('swal', [

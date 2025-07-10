@@ -41,7 +41,7 @@
     @include('layouts.includes.admin.navigation')
     @include('layouts.includes.admin.sidebar')
 
-    <div class="p-4 sm:ml-64">
+    <div class="p-4 md:ml-64">
 
         <div class="mt-14 flex items-center">
             @include('layouts.includes.admin.breadcrumb')
@@ -68,6 +68,30 @@
             Swal.fire(@json(session('swal')))
         </script>
     @endif
+
+    <script>
+        forms = document.querySelectorAll('.delete-form');
+
+        forms.forEach(form => {
+            form.addEventListener('submit', function(event) {
+                event.preventDefault();
+                Swal.fire({
+                    title: "¿Estás seguro?",
+                    text: "No podrás revertir los cambios!",
+                    icon: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#3085d6",
+                    cancelButtonColor: "#d33",
+                    confirmButtonText: "Si, eliminar!",
+                    cancelButtonText: "Cancelar"
+
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        form.submit();                    }
+                });
+            })
+        })
+    </script>
 </body>
 
 </html>

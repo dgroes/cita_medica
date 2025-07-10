@@ -5,7 +5,7 @@
     ],
     [
         'name' => 'Usuarios',
-        'href' => route('admin.users.index'),s
+        'href' => route('admin.users.index'),
     ],
     [
         'name' => 'Editar Usuario',

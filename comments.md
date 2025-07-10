@@ -861,11 +861,242 @@ El ejemplo del breadcrumb será el de la view de `users/create`:
     ],
 ]">
 ```
+## C28: Asignación de Rol a User con Laravel Permission:
+Ya se mencionó como funciona previtamente **Laravel Permission** en el comentario `C20: Laravel Permission`, ahora se pasa a su uso pero en `User`.
+Primero se deberá crear el seeder de User:
+```bash
+php artisan make:seeder UserSeeder
+```
+creando el fichero `database/seeders/UserSeeder.php`, ahora dentro del `foreach` deberá estar lo siguiente:
+```php
+foreach ($users as $userData) {
+            $user = User::factory()->create($userData);
+            $user->assignRole('Doctor'); 
+        }
+```
+Entonces a `$user` le decimos `->assignRole('Doctor')`, esto hará que se le asigne el rol de Doctor, pero para saber como funciona debemos tener en cuenta lo siguiente:
+Previamente del del model de user: `app/Models/User.php` se añadió el siguiente `trait`: `use Spatie\Permission\Traits\HasRoles;`, este `trait` lo que hace es agregar distintos métodos como:
+- assignRole()
+- hasRole()
+- getRoleNames()
+- syncRoles()
+- y mucho más
 
-##
-##
-##
-##
+Entonces cuando se llama a:
+```php
+$user->assignRole('Doctor');
+```
+Spatite hace una consulta en la tabla `roles` para encontrar el registro con `name = 'Doctor`. es decir algo como esto:
+```sql
+SELECT * FROM roles WHERE name = 'Doctor' LIMIT 1;
+```
+
+Luego cuando se crea el registro, además se crea una relación en la tabla `model_has_roles`. Esta tabal es una tabla intermedia con lo siguiente:
+- role_id (el ID del rol que encontró)
+- model_type = 'App\Models\User'
+- model_id = ID del usuario
+Esto funciona gracias a una **relación polimórfica**, así se puede asignar roles no solo a `User`, sino también a otros modelos si se desea. Aría algo así:
+```sql
+INSERT INTO model_has_roles (role_id, model_type, model_id)
+VALUES (2, 'App\Models\User', 1);
+```
+
+La relación creada queda activa para futuras validaciones, entonces luego ya se puede usar:
+```php
+$user->hasRole('Doctor'); // true
+```
+Laravel Permission carga esa relación internamente usando Eloquent
+### Lo que estaría en la BD sería:
+```bash
+mysql -u citas_user -p
+Enter password: "contraseña"
+mysql> USE citas_medicas;
+
+SELECT id, name FROM roles;
++----+---------------+
+| id | name          |
++----+---------------+
+|  3 | Administrador |
+|  2 | Doctor        |
+|  1 | Paciente      |
+|  4 | Recepcionista |
++----+---------------+
+
+mysql> select * from model_has_roles;
++---------+-----------------+----------+
+| role_id | model_type      | model_id |
++---------+-----------------+----------+
+|       2 | App\Models\User |        1 |
+|       2 | App\Models\User |        2 |
++---------+-----------------+----------+
+
+mysql> select id, name from users;
++----+----------------------+
+| id | name                 |
++----+----------------------+
+|  1 | Maximiliano Gallegos |
+|  2 | José Alarcón         |
++----+----------------------+
+```
+Estan serían las tres tablas que están relacionadas en este caso, `model_has_role`, es decir, la tabla intermedia que asocia roles a models, como `user`, tiene esto:
+```bash
+| role\_id | model\_type     | model\_id |
+| -------- | --------------- | --------- |
+| 2        | App\Models\User | 1         |
+| 2        | App\Models\User | 2         |
+```
+Esto significa que los usuarios 1 y 2 tiene el rol con ID 2 (Doctor)
+
+
+Diagrama:
+```bash
+          ┌────────────┐
+          │  User (id) │
+          └─────┬──────┘
+                │ assignRole('Doctor')
+                ▼
+        ┌────────────────────┐
+        │  Busca en roles    │ ◀─── name = 'Doctor'
+        └─────────┬──────────┘
+                  │
+                  ▼
+     ┌──────────────────────────────┐
+     │ Inserta en model_has_roles   │
+     │ (role_id, model_type, model_id) │
+     └──────────────────────────────┘
+```
+## C29: Laravel Permission VS Laravel Vanilla
+*Comentario no vinculado a un fichero en especifico, solo se plantea si ¿vale la pena usar Laravel Permission o manejar roles y permisos de forma manual?*
+### Con Laravel Permission
+**Ventajas de usar Laravel Permission (Spatie)**
+| Ventaja                                   | Detalle                                                                               |
+| ----------------------------------------- | ------------------------------------------------------------------------------------- |
+| **Estandarizado**                         | Es una solución probada, usada por miles de proyectos Laravel.                        |
+| **Polimórfico**                           | Puedes asignar roles/permisos a otros modelos (no solo `User`).                       |
+| **Relación muchos-a-muchos lista**        | Ya vienen con `roles`, `permissions`, `model_has_roles`, `role_has_permissions`, etc. |
+| **Métodos útiles ya listos**              | Como `hasRole()`, `hasPermissionTo()`, `assignRole()`, `syncPermissions()`, etc.      |
+| **Middleware incorporado**                | Puedes proteger rutas fácilmente: `->middleware('role:Admin')`                        |
+| **Permite múltiples roles por usuario**   | Sin esfuerzo extra.                                                                   |
+| **Permisos directos o a través de roles** | Puedes dar permisos a un usuario sin asignarle un rol.                                |
+| **Buen soporte y documentación**          | Comunidad activa y bien mantenido.                                                    |
+
+Desventajas al utilizarlo:
+| Desventaja                                       | Detalle                                                            |
+| ------------------------------------------------ | ------------------------------------------------------------------ |
+| **Aprendizaje inicial**                          | Requiere entender cómo funciona el sistema de Spatie y sus tablas. |
+| **Puede ser "overkill" para proyectos pequeños** | Si solo necesitas "Admin" y "Usuario", puede ser innecesario.      |
+| **Dependencia externa**                          | Si algún día cambias de enfoque, tienes que migrar datos y lógica. |
+### Sin Laravel Permissions
+Ventajas:
+- Control total: manualmente se decide cómo es la tabla `roles`, cómo se asocian, cómo se valida, etc.
+- Simple en proyectos muy pequeños (por ejemplo, solo 2 roles, admin y user)
+
+Desventajas:
+- Cosas que se tienen que implementar de manera manual:
+    - Relaciones
+    - Middleware para roles
+    - Comprobaciones (ej: `if ($user->role === 'admin')`)
+    - Permisos personalizados
+- Difícil de escalar (si se quiere más de 2 o 3 roles/permisos, puede complicarse)
+- No se puede usar helpers como `@can`, `@role`, `@assignRole()`.
+## C30: Laravel Livewire Table personalizada
+Primero se deberá crear una nueva tabla, con el siguiente comando: 
+```bash
+php artisan make:datatable Admin/Datatables/UserTable User
+```
+eso creará el fichero `app/Livewire/Admin/Datatables/UserTable.php`, dentro de el pasará lo siguiente:
+### Formateo de datos
+Con Laravel Livewire Table se pueden crear métodos dentro del fichero de las tablas para su uso, por ejemplo en este caso se crearon dos métodos, uno para el formateo del número teléfonico y el DNI que en este caso sería RUN:
+**FORMATEO DE RUN**:
+```php
+protected function formatRun($run)
+    {
+        $run = preg_replace('/[^0-9kK]/', '', $run);
+        $dv = strtoupper(substr($run, -1));
+        $num = substr($run, 0, -1);
+        $formatted = number_format($num, 0, '', '.');
+
+        return $formatted . '-' . $dv;
+    }
+```
+El método `formatRun()` lo que hace es converitr un **RUN** chileno (sin formato) en un formato legible como: "12345678k  →  12.345.678-K"
+- `$run = preg_replace('/[^0-9kK]/', '', $run)`: Limpi el valor recibido y **elimina todo lo que no sea un número del 0 al 9 o la letra "k" (mayúzcula o minuscula)**, entonces si llega: `'12.345.678-k'`, lo convierte en:`12345678k`
+- `$dv = strtoupper(substr($run, -1))`: Toma el último carácter(el dígito verificador) y lo convierte a maúscula (K en ves de k), es decir: 12345678k → dv = 'K'
+- `$num = substr($run, 0, -1)`: Toma **todos los caracteres menos el último**, es deir, **la parte numérica del RUN**. Ejemplo: `12345678k` → `num = '12345678'`.
+- `$formatted = number_format($num, 0, '', '.')`: Aplica puntos de miles al número. 12345678 → 12.345.678
+- `return $formatted . '-' . $dv;`: Une el número formateado con su dígito verificador usando `-`. 
+Entonces si de entrada está el DNI(Run): 12345678k, su salida al usuario será "12.345.678-K", mejorando la legibilidad para el usuario sin alterar los datos originales
+
+**FORMATEO DE NÚMERO DE TELÉFONO**:
+En Chile los números de celular tienen el siguiente formato: **"56930608642 → 11 dígitos"**, para poder limpiar vien los datos de salida se creó el siguiente método:
+```php
+protected function formatPhone($phone)
+    {
+        $digits = preg_replace('/\D/', '', $phone);
+
+        if (strlen($digits) === 11 && substr($digits, 0, 3) === '569') {
+            $country = substr($digits, 0, 2); // 56
+            $carrier = substr($digits, 2, 1); // 9
+            $part1 = substr($digits, 3, 4);   // XXXX
+            $part2 = substr($digits, 7);      // XXXX
+            return "{$country} {$carrier} {$part1} {$part2}";
+        }
+        return $phone;
+    }
+```
+## C31: Uso de builder() con with('roles') para cargar roles en Livewire Table
+Dentro del fichero `Admin/Datatables/UserTable.php` está lo siguiente:
+```php
+// protected $model = User::class;
+public function builder(): Builder
+    {
+        return User::query()->with('roles');
+    }
+```
+Primero se comenta `$mode. = User::class`. Laravel Livewire Tables permite definir el modelo de dos maneras:
+
+**Opción A - Usando `$model` directamente:**:
+```php
+protected $model = User::class;
+```
+Esto usa el modelo `User` como fuente de datos **sin aplicar relaciones personalizadas o scopes adicionales**
+
+**Opción B - Usando `builder()`:**
+```php
+public function builder(): Builder
+{
+    return User::query()->with('roles');
+}
+```
+Esta es una **opción más flexible**, y permite agregar relaciones, filtros, scopes, etc. En este caso:
+- Se hace `->with('roles')`, lo cual **carga la relación** `roles` usando Eager Loading
+- Esto evita múltiples consultas N+1 al acceder a `$user->roles` en cada fila de la tabla
+
+Entonce al hacer el uso del método `builder()` hace uso de Laravel Permission (Spatie), dentro del model de user: `app/Models/User.php` está el siguiente `trait`:
+```php
+use Spatie\Permission\Traits\HasRoles;
+```
+y dento del Extends está 
+```php
+use HasRoles;
+```
+Esto le da el model `User` un método `roles()` como si se hubiera definido:
+```php
+public function roles()
+{
+    return $this->belongsToMany(Role::class, 'model_has_roles');
+}
+```
+*esta tabla es la intermedia de User y Role*
+Por lo tanto cuando se hace:
+```php
+User::query()->with('roles');
+```
+Se está **extrayendo los datos de la tabla** `model_has_roles` + `roles` asociadas al usuario, para que luego se pueda usar:
+```php
+$row->roles->first()?->name ?? 'Sin rol';
+```
+en la tabla sin generar múltiples queries.
 ##
 ##
 ##

@@ -809,9 +809,59 @@ El flujo general sería:
 - En esa vista se carga el layout, y si existe `session('swal')`, se genera el `Swal.fire(...).`
 - Se muestra la alerta.
 - Laravel elimina automáticamente ese valor flash de la sesión.
+## C27: Controller User
+*Esto será algo ya visto, pero igual estará los pasos*
+Ahora estará la gestión de los usuarios, para ello lo primero será crear un controller de usuarios:
+```bash
+php artisan make:controller Admin/UserController --
+model=User
+```
+El controller estará dentro de `app/Http/Controllers/Admin/`, además con `--model=User`, se especifica que **el controller deberá utilizar el modelo de User**. el mensaje de exito será:
+```bash
+INFO  Controller [app/Http/Controllers/Admin/UserController.php] created successfully.
+```
 
+Luego será la creación de las **views**:
+```bash
+views
+└── admin
+    ├── roles
+    └── users
+        ├── create.blade.php
+        ├── edit.blade.php
+        └── index.blade.php
+```
 
-##
+Luego de esto, se deberá crear las rutas. Dentro de `routes/admin.php` deberá estar lo siguiente: 
+```php
+Route::resource('users', UserController::class);
+```
+Dento del comentario `C22: Ruta para los roles (Route::resource)` se explia mas en detalle como funciona `resource`.
+
+Ahora se añade en el sidebar la ruta de usuario junto con los breadcrumbs:
+```php
+ 'name' => 'Usuarios',
+ 'icon' => 'fa-solid fa-users',
+ 'href' => route('admin.users.index'),
+ 'active' => request()->routeIs('admin.users.*'),
+```
+El ejemplo del breadcrumb será el de la view de `users/create`:
+```php
+<x-admin-layout title="Usuarios | CitasMédicas" :breadcrumbs="[
+    [
+        'name' => 'Dashboard',
+        'href' => route('admin.dashboard'),
+    ],
+    [
+        'name' => 'Usuarios',
+        'href' => route('admin.users.index'),
+    ],
+    [
+        'name' => 'Nuevo',
+    ],
+]">
+```
+
 ##
 ##
 ##

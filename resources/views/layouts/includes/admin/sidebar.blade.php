@@ -16,31 +16,13 @@
             'icon' => 'fa-solid fa-shield-halved',
             'href' => route('admin.roles.index'),
             'active' => request()->routeIs('admin.roles'),
-
-        ]
-        /* [
-            'name' => 'Dashboard',
-            'icon' => 'fa-solid fa-chart-line',
-            'href' => route('admin.dashboard'),
-            'active' => false,
-            'submenu' => [
-                [
-                    'name' => 'Product',
-                    'href' => '#',
-                    'active' => false,
-                ],
-                [
-                    'name' => 'Otra cosa',
-                    'href' => '#',
-                    'active' => false,
-                ],
-                [
-                    'name' => 'Enlace otro',
-                    'href' => '#',
-                    'active' => false,
-                ],
-            ],
-        ], */
+        ],
+        [
+            'name' => 'Usuarios',
+            'icon' => 'fa-solid fa-users',
+            'href' => route('admin.users.index'),
+            'active' => request()->routeIs('admin.users.*'),
+        ],
     ];
 @endphp
 <aside id="logo-sidebar"

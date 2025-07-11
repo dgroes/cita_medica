@@ -1097,6 +1097,174 @@ Se está **extrayendo los datos de la tabla** `model_has_roles` + `roles` asocia
 $row->roles->first()?->name ?? 'Sin rol';
 ```
 en la tabla sin generar múltiples queries.
+## C32: Creación de nuevo Usuario
+Para la creación de un nuevo usuario se utilizaron componentes de WireUI, dentro del fichero `resources/views/admin/users/create.blade.php` se  encontrará lo siguiente:
+
+**Creación del Form**:
+```php
+<x-wire-card>
+    <form action="{{ route('admin.users.store') }}" method="POST">
+        @csrf
+        ...
+</x-wire-card>
+```
+Primero el `action` deberá apuntar a la ruta de **"admin/user/store"**, como es una creación deberá ser de `method` tipo `POST`, además de añadirle el `csrf` para cifrar los datos:
+
+**Uso de inputs de WireUI**:
+```php
+<x-wire-input name="name" label="Nombre"
+```
+La ventaja de usar los inputs de [WireUI](https://wireui.dev/components/input) es la itegración del `label` de forma más simple dentro del formulario, además de que se pueden agregar más cosas, ver la documentación en el enlace previo para más detalle.
+
+**Uso de iconos con Hericons**:
+WireUI trabaja con iconos de [Heroicons](https://heroicons.com/), entonces para su uso se deberá saber el nombre de un icono y agregarlo en este caso al input así:
+```php
+<x-wire-input name="address" label="Dirección" icon="home" 
+```
+Con el nombre de **"home"** WireUI agrega el icono de la biblioteca de Heroicons.
+
+**Campo de Rol**:
+Ahora para poder cargar un **SELECT** de todos los roles se deberá además utilizar el controller de User:
+```php
+public function create()
+    {
+        $roles = Role::all();
+        return view('admin.users.create', compact('roles'));
+    }
+```
+La variable `$roles` tendrá todos los registro de **Role**, en este caso la importación del modelo de rol tiene que ser de Spite, es decir, su trait es: `use Spatie\Permission\Models\Role;`
+
+```php
+<x-wire-native-select label="Rol" name="role_id" icon="user-circle" required>
+    <option value="" disabled selected>Selecione un rol</option>
+
+    @foreach ($roles as $role)
+        <option value="{{ $role->id }}">
+            @selected(old('role_id') == $role->id)
+            {{ $role->name }}
+        </option>
+    @endforeach
+</x-wire-native-select>
+```
+Gracías al `compact('roles')` utilizado en el controller de User, **dicha variable ahora estará disponible dentro de la view de creación**, es decir, tendrémos todos los valores de rol para su uso. Ahora con un `@foreach` se **recorren los roles y se van agregando como opciones en el `<option>`**. Importante será que se le asigne como `value` el `$role->id`, ya que se **ID será que deberá ir en el registro de creación**.
+
+**Visualizar los datos de envio**:
+Ahora si por ejemplo en el método `store` está lo siguiente:
+```php
+public function store(Request $request)
+    {
+        return $request->all();
+    }
+```
+Esto retornará en el navegador la petición completa que se acaba de enviar, si como ejemplo llenamos los datos del formulario de cración y lo enviamos al llegar al `store` se mostrará en el navegador:
+```json
+{
+  "_token": "2tut2bNKV4U65i2qLoglOo4qwOup2XuUnzedzKnf",
+  "name": "Dalpo Chi",
+  "email": "dalpo@gmail.com",
+  "password": "dalpoElGuapo",
+  "password_confirmation": "dalpoElGuapo",
+  "address": "Chonchi #4232, San Gatos",
+  "phone": "56913141516",
+  "dni": "259874562",
+  "role_id": "1"
+}
+```
+## C33: CSRF token
+Siguiendo el comentario `C32` previo, ahi dentro de los datos recibidos por el método store está entre dichos datos el campo `_token`.
+Dentro de un formulario al utilizar `@csrf` hace que Laravel **automáticamente genera un token CSRF único por sesión de usuario y lo inlcuye como un campo oculto en los formularios HTML** cuando se usa el helper `@csrf`
+Por ejemplo si tengo el siguiente formulario:
+```php
+<form method="POST" action="/usuarios">
+    @csrf
+    <!-- otros inputs -->
+</form>
+```
+Internamente ese envio se convierte en algo como:
+```php
+<input type="hidden" name="_token" value="2tut2bNKV4U65i2qLoglOo4qwOup2XuUnzedzKnf">
+```
+Y cuando se envía el formulario, Laravel verifica que ese token coincida con el que está almacenado en la sesión del usuario. Si no coincide, Laravel lanzará una excepción `419 Page Expired`.
+Entonces el **token CSRF** que Laravel genera es para proteger la aplicación contra ataques de tipo **Cross-Site Request Forgery (CSRF).**
+
+### Qué es CSRF:
+Un ataque CSRF intenta engañar al navegador de un usuario autenticado para que realice una acción no deseada en una aplicación web en la que ya está autenticado. Laravel usa tokens CSRF para asegurarse de que el formulario que se envía realmente proviene de tu aplicación y no de una fuente externa maliciosa.
+## C34: Guardar usuario en la BD
+Dentro del controller de User, en el método **Store** deberá primero tener una validación de los datos:
+```php
+$data = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:8|confirmed',
+            'dni' => 'required|string|max:20|unique:users',
+            'phone' => 'nullable|string|max:20',
+            'address' => 'nullable|string|max:255',
+            'role_name' => 'required|exists:roles,name',
+        ]);
+```
+Este es un ejemplo de validaciones simples en Laravel, hay otras formas mejores, pero con esto bastará de momento.
+
+Luego se crea la variable `$user` en la cual se guardará el modelo de **User** que tendrá el método `create` en la cual estarán los datos de la validación: 
+```php
+$user = User::create($data);
+```
+
+**Asignación de rol al user**:
+```php
+$user->assignRole($data['role_name']);
+```
+El método `assingRole` es un método que viene del **trati** `HasRoles`, el cual se está usando en el model de `Uuser`:
+```php
+use Spatie\Permission\Traits\HasRoles;
+```
+Este método sirve para **asignar uno o más roles** a un modelo (ej. un usuario), y funciona de forma segura con validaciones, relaciones y registros automáticos.
+Entonces cuando se llama a  `$user->assignRole('admin');` internamente pasa lo siguiente:
+1. **Verifica qué tipo de valor se está pasando**: Puede ser un string, un ID, un array de nombres, o incluso una coleccioón de modelos `Role`
+2. **Busca los roles en la BD** usando el nombre (o ID), a través del modelo `patie\Permission\Models\Role`, validando que existan y que pertenezcan al `guard` correcto (por efecto `web`)
+3. **Relaciona el rol con el usuario** guardando el vínculo en la tabla intermedia `model_has_roles`, usando una relación polimórfica (`model_type`, `model_id` y `role_id`)
+4. **Evita duplicados**: Si el usuario ya tiene asignado ese rol, no lo vuelve a insertar
+
+**Uso de `attach`**:
+En lugar de usar el assing: `$user->assignRole($data['role_name'])`, tambien se puede usar lo siguiente:
+```php
+$user->roles()->attach($data['role_id']);
+``` 
+El método `attach()` es un método estaándar de Eloquent que solo sirve para relaciones *muchos a muchos* normales, no polimórficas. Si se usa directaente se podría:
+- Insertar el rol en una tabla equivocada
+- Omitir el `model_type`
+- Dañar las funciones de `hasRole()`, `getRoleNames()`, etc.  
+
+**Qué hace `assingRole()` que `attach()` no?**:
+Cuando se usa Spatie, los roles están definidos en la tabla `roles` y relacionados con cualquier modelo (`User`, `Team`, etc) a través de la tabla `model_has_roles`
+```bash
+model_has_roles
+---------------
+role_id
+model_type → ej. 'App\Models\User'
+model_id   → ej. 3
+```
+Spatie usa esta relación polimórfica, y métodos como `assingRole()` aseguran que todo se haga bien con esa estrucura.
+En cambio, `attach` es un método que sireve para relaciones polimórficas normales como ya se mencionó.
+
+**Diferencias** con GPT
+|                                           | `assignRole()` (✅ Recomendado)  | `attach()` (❌ No recomendado)                         |
+| ----------------------------------------- | ------------------------------- | ----------------------------------------------------- |
+| 🔗 Usa `model_has_roles` (tabla especial) | ✅ Sí                            | ⚠️ No directamente, se salta la lógica del package    |
+| 🧠 Valida si el rol existe                | ✅ Sí (lanza error si no existe) | ❌ No (puede insertar datos incorrectos)               |
+| 🔐 Verifica el `guard` (`web`, etc.)      | ✅ Sí                            | ❌ No                                                  |
+| 🔁 Evita duplicados                       | ✅ Sí                            | ❌ No (puede agregar el mismo rol varias veces)        |
+| 🧩 Respeta la lógica polimórfica          | ✅ Sí (usa `model_type`, etc.)   | ❌ No (no es compatible con polimorfismo directamente) |
+| 📦 Compatible con los métodos de Spatie   | ✅ Totalmente                    | ❌ No, puede romper `hasRole()` y otros                |
+
+
+##
+##
+##
+##
+##
+##
+##
+##
 ##
 ##
 ##

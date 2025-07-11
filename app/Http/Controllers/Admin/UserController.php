@@ -79,15 +79,48 @@ class UserController extends Controller
      */
     public function edit(User $user)
     {
-        return view('admin.users.edit', compact('user'));
+        //Recuperar roles para pasar a la View de Edit.Users
+        $roles = Role::all();
+
+        return view('admin.users.edit', compact('user', 'roles'));
     }
 
     /**
      * Update the specified resource in storage.
      */
+
+    /* C35: Edición de usuario (syncRoles) */
     public function update(Request $request, User $user)
     {
-        //
+        // return $request->all();
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
+            'dni' => 'required|string|max:20|unique:users,dni,' . $user->id,
+            'phone' => 'nullable|string|max:20',
+            'address' => 'nullable|string|max:255',
+            'role_name' => 'required|exists:roles,name',
+        ]);
+        // dd($data);
+        $user->update($data);
+
+        // Si se proporciona una nueva contraseña, actualizarla
+        if($request->password){
+            $user->password = bcrypt($request->password);
+            $user->save();
+        }
+
+        // Asignar rol al usuario
+        $user->syncRoles([$request->role_name]);
+
+        // Mensaje de exito
+        session()->flash('swal', [
+            'title' => 'Usuario actualizado',
+            'text' => 'El usuario: ' . $user->name . ' ha sido actualizado exitosamente.',
+            'icon' => 'success',
+            'showConfirmButton' => true,
+        ]);
+        return redirect()->route('admin.users.edit', $user->id);
     }
 
     /**

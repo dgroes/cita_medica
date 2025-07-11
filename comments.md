@@ -1255,9 +1255,54 @@ En cambio, `attach` es un método que sireve para relaciones polimórficas norma
 | 🔁 Evita duplicados                       | ✅ Sí                            | ❌ No (puede agregar el mismo rol varias veces)        |
 | 🧩 Respeta la lógica polimórfica          | ✅ Sí (usa `model_type`, etc.)   | ❌ No (no es compatible con polimorfismo directamente) |
 | 📦 Compatible con los métodos de Spatie   | ✅ Totalmente                    | ❌ No, puede romper `hasRole()` y otros                |
-
-
-##
+## C35: Edición de usuario (syncRoles)
+El formulario de edición será similar al de creación, con algunas adiciones:
+### **Contraseña**:
+Primero, la contraseña no será un input `required`, por lo que dentro del método `update` del controller deberá estar lo siguiente:
+```php
+if($request->password){
+            $user->password = bcrypt($request->password);
+            $user->save();
+        }
+``` 
+Con esto decimos: "Si dentro del `$request` recibido hay un "password" quiero que se **obtenga la contraseña previamente registrada y la cambies por la nueva contraseña recibida** en el `$request`.
+### **Datos unicos repetidos**:
+Tanto el dato email como DNI están establecidos en la tabla de User como datos únicos, se deberá manejar esto para que no de error:
+```php
+$data = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
+            'dni' => 'required|string|max:20|unique:users,dni,' . $user->id,
+            'phone' => 'nullable|string|max:20',
+            'address' => 'nullable|string|max:255',
+            'role_name' => 'required|exists:roles,name',
+        ]);
+```
+Si en la validación del campo `email` usas simplemente:
+```php
+'email' => 'required|string|email|max:255|unique:users,email'
+```
+entonces, al intentar actualizar un usuario que ya tiene ese correo registrado, Laravel lanzará un error de validación indicando que el correo ya existe.
+Esto ocurre porque la regla `unique` verifica que ningún otro registro en la tabla `users` tenga ese mismo correo, incluyendo el del propio usuario que estás actualizando. Para evitar ese falso positivo, se debe excluir al usuario actual de la validación agregando su ID como tercer argumento de la regla `unique`, así:
+```php
+'email' => 'required|string|email|max:255|unique:users,email,' . $user->id
+```
+Esto le indica a Laravel que ignore el registro con ese ID al comprobar la unicidad del correo, permitiendo que el usuario mantenga su propio correo sin causar errores de validación.
+### syncRoles
+Normalmente para relacionar el rol al usuario se podría hacer algo como esto:
+```php
+$user->roles()->sync([$request->role_name]);
+```
+Y por ejemplo `role_name` contiene algo como `'Doctor'`, (el nombre del rol), pero `roles()->sync()` espera los **IDs** de los roles, no sus nombres, en este caso si estubiera esa línea lanzaría un error como: **"Incorrect integer value: 'Doctor' for column 'role_id'"**
+Como se está trabajando con **Laravel Permission** y ya se está usando el nombre del rol(`role_name`), **se debrá usar el método** `syncRoles()` que es el equivalente correcto y seguro en este package:
+```php
+$user->syncRoles([$request->role_name]);
+```
+Entonces, por qué usar `syncRoles` y no `roles()->sync`:
+- `roles()->sync()` es una relación Eloquent directa → espera IDs.
+- `syncRoles()` es un método del trait `HasRoles` → acepta nombres, IDs o modelos.
+- `syncRoles()` limpia los roles anteriores del usuario y asigna solo los nuevos de forma segura.
+Con este cambio no habrá errores y se **estará usando correctamente la lógica de Spatie**.
 ##
 ##
 ##

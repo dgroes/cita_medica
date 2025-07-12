@@ -21,6 +21,11 @@ class UserTable extends DataTableComponent
     public function configure(): void
     {
         $this->setPrimaryKey('id');
+
+        // $this->setSearchPlaceholder("Buscar");
+        // $this->setSearchIcon('heroicon-m-magnifying-glass');
+
+        // $this->setSearch('Laravel');
     }
 
     public function columns(): array
@@ -39,7 +44,8 @@ class UserTable extends DataTableComponent
             Column::make("Rol", "roles")
                 ->label(function ($row) {
                     return $row->roles->first()?->name ?? 'Sin rol';
-                }),
+                })
+                ->sortable(),
             Column::make("Teléfono", "phone")
                 ->searchable()
                 ->format(function ($value) {

@@ -15,7 +15,7 @@
                         </svg>
                     </button>
                     <a href="/" class="flex ms-2 md:me-24 items-center">
-                        <i class="pr-2 fa-solid fa-hospital text-xl text-white"></i>
+                        <i class="pr-2 fa-solid fa-hospital text-xl text-black"></i>
                         <span
                             class="self-center text-xl font-semibold sm:text-2xl whitespace-nowrap dark:text-white">Citas Médicas</span>
                     </a>

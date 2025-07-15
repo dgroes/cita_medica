@@ -1364,8 +1364,161 @@ if ($user->hasRole('Paciente')) {
         }
 ```
 Este código hace que si el usuario en la creación tiene asignado el rol `Paciente`, entonces "crea un registro asociado en la tabla `patiens` usando la relación definida (`hasOne`) y redirige a la vista de edición del paciente. **Entonces crea automáticamente un** `patient` **si el usuario tiene el rol** `Paciente`
-## C38:
-## C39:
+## C38: Creación de tabla patient
+Ahora al igual que la tabla de "Users" será con "Pacients". Para eso bastará con crear el componente con Laravel Livewire Tables: 
+```bash
+❯ php artisan make:datatable admin.datatables.patient-table
+
+ ┌ What is the name of the model you want to use in this table? ┐
+ │ Patient                                                      │
+ └──────────────────────────────────────────────────────────────┘
+
+Livewire Datatable Created: PatientTable
+```
+Creando el fichero `app/Livewire/Admin/Datatables/PatientTable.php`.
+Lo bueno y ventajoso al establecer el modelo en la creación del componente, esque cargará automaticamente las columnas en base al Model:
+```php
+public function columns(): array
+    {
+        return [
+            Column::make("Id", "id")
+                ->sortable(),
+            Column::make("User id", "user_id")
+                ->sortable(),
+            Column::make("Blod type id", "blod_type_id")
+                ->sortable(),
+            Column::make("Allergies", "allergies")
+                ->sortable(),
+            Column::make("Chronic conditions", "chronic_conditions")
+                ->sortable(),
+            Column::make("Surgical history", "surgical_history")
+                ->sortable(),
+            Column::make("Family history", "family_history")
+                ->sortable(),
+            Column::make("Observations", "observations")
+                ->sortable(),
+            Column::make("Emergency contact name", "emergency_contact_name")
+                ->sortable(),
+            Column::make("Emergency contact relationship", "emergency_contact_relationship")
+                ->sortable(),
+            Column::make("Emergency contact phone", "emergency_contact_phone")
+                ->sortable(),
+            Column::make("Date of birth", "date_of_birth")
+                ->sortable(),
+            Column::make("Photo", "photo")
+                ->sortable(),
+            Column::make("Created at", "created_at")
+                ->sortable(),
+            Column::make("Updated at", "updated_at")
+                ->sortable(),
+        ];
+    }
+```
+Ahorrando tiempo en creació manual. De momento dicha tabla pasará por una edición, por ahora se desea que estén las mismas columnas de `UserTable`.
+```php
+public function columns(): array
+    {
+        return [
+            Column::make("Id", "id")
+                ->sortable(),
+            Column::make("Nombre", "user.name")
+                ->sortable(),
+            Column::make("Run", "user.dni")
+                ->searchable()
+                ->format(fn($value) => FormatHelper::run($value)),
+            Column::make("Teléfono", "user.phone")
+                ->searchable()
+                ->format(fn($value) => FormatHelper::phone($value)),
+            Column::make("Dirección", "user.address")
+                ->searchable(),
+            Column::make("Email", "user.email")
+                ->sortable(),
+        ];
+    }
+```
+Pero tambien se desea que se haga una relación, para poder traer el nombre el paciente se deberá antes hacer lo siguiente:
+```php
+public function builder(): Builder
+    {
+        return Patient::query()
+            ->with('user');
+    }
+```
+El método `builder()` le dice a **Livewire Tables** qué datos debe cargar para la tabla. Es el **query base** que la tabla userá para lsitar los registros. Más en dettalle, gracías a GPT:
+1. `Patient::query()`
+- Indica un consulta (`Eloquent\Builder`) sobre el modelo `Patient`
+- Es equivalente a hacer: `select * from patients`.
+2. `->with(user)`
+- Le indica a Eloquent que **eager load** (cargue anticipadamente) la relación `user`.
+- Así evita el problema **N+1**(que hace muchas consultas adicionales por cada fila).
+- Significa: por cada `Patient`, también trae su `User` relacionado (usando la relacón `user()` definida en el model `Patient`).
+Con esto cada registro de la tabla y trae también los datos de su usuario (nombre, dni(run), teléfono, etc.) Y se pueden usar directamente como `user.name`, `user.phone`, etc.
+**Es importante usar `with(user)`**:
+Sin él, al renderizar la tabla, Laravel haría una consulta adicional por cada peciente para obtener su `user`, asiendo que sea ineficiente:
+- Con `with('user')`:
+```sql
+select * from patients;
+select * from users where id in (...);
+```
+Sin `with('user')`:
+```sql
+select * from patients;
+select * from users where id = 1;
+select * from users where id = 2;
+select * from users where id = 3;
+...
+```
+Como se muestra en el ejemplo, la mejor opción sería con `with('user')`.
+## C39: Helpers Personalizado
+Dentro de Laravel hay muchos Helpers ya creados para su uso: [Helpers](https://documentacionlaravel.com/docs/11.x/helpers). Actualmente tanto detro del fichero de tablas `app/Livewire/Admin/Datatables/PatientTable.php` y `app/Livewire/Admin/Datatables/UserTable.php` poseen ambos las mismas funciones. Funciones para el formateo de RUN y telefono, para evitar repetición y hacer uso de reutilización de código se creará un `Helper` personalizado.
+El fichero en cuestión será: `app/Helpers/FormatHelper.php`, entonces estará:
+```php
+public static function run($run)
+    {    
+    $run = preg_replace('/[^0-9kK]/', '', $run);
+    $dv = strtoupper(substr($run, -1));
+    $num = substr($run, 0, -1);
+    $formatted = number_format($num, 0, '', '.');
+
+    return $formatted . '-' . $dv;
+    }
+```
+además del método `phone`. Entonces dichas funciones antes estaban dentro de las tablas livewire, pero ahora dentro de `FormatHelper.php` deberá tener un pequeño cambio. Ahora **dichas funciones deben ser `static`, esto debido a que serán llamadas sin crear una instancia de la clase**, como por ejemplo
+```php
+FormatHelper::run($value);
+```
+Esto solo sería posible si el método está declarado como `public static function run(...)`. Importante será entender las ficherancias entre dichos métodos:
+|                 | `protected`                                         | `public static`                             |
+| --------------- | --------------------------------------------------- | ------------------------------------------- |
+| ¿Cómo se usa?   | Requiere instancia: `$obj = new Clase(); $obj->m()` | Se llama directamente con `Clase::metodo()` |
+| ¿Accesibilidad? | Solo desde dentro de la clase o sus hijas           | Disponible desde cualquier parte del código |
+| ¿Uso típico?    | Métodos internos de la clase                        | Métodos utilitarios o de ayuda              |
+Entonces, la intención de este `Helper` es tener un fichero reutilizable, y llamarlo en lugares como Livewire Tables, controllers, etc., así:
+```php
+FormatHelper::run($value);
+```
+para que esto funcione, Laravel (y PHP en general) requiere que ese método sea `public`y `static`. 
+**Llamar dicho `Helper`**
+Ahora siguiendo con el ejemplo de las tablas, dentro de `Datatables/PatientTable.php` estará
+```php
+use App\Helpers\FormatHelper;
+```
+para hacer el llamado al helper.
+Ahora por ejemplo dentro de la columna `phone` pasará de esto
+```php
+ Column::make("Teléfono", "user.phone")
+                ->searchable()
+                ->format(function ($value) {
+                    return $this->formatPhone($value);
+                }),
+``` 
+a esto: 
+```php
+Column::make("Teléfono", "user.phone")
+    ->searchable()
+    ->format(fn($value) => FormatHelper::phone($value)),
+```
+Mejorando la legibilidad además de un uso de reutilización.
 ## C40:
 ##
 ##

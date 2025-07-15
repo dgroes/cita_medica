@@ -9,7 +9,7 @@ class Patient extends Model
 
     protected $fillable = [
         'user_id',
-        'blod_type_id',
+        'blood_type_id',
         'allergies',
         'chronic_conditions',
         'surgical_history',
@@ -31,6 +31,6 @@ class Patient extends Model
 
     // Relación inversa con BloodType
     public function bloodType(){
-        return $this->belongsTo(BloodType::class, 'blod_type_id');
+        return $this->belongsTo(BloodType::class, 'blood_type_id');
     }
 }

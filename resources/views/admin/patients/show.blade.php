@@ -5,7 +5,7 @@
     ],
     [
         'name' => 'Pacientes',
-        'href' => route('admin.patient.index'),
+        'href' => route('admin.patients.index'),
     ],
     [
         'name' => 'Detalle'

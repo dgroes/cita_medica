@@ -63,6 +63,13 @@ class UserController extends Controller
             'icon' => 'success',
             'showConfirmButton' => true,
         ]);
+
+        // Si el usuario es de tipo Paciente, crear un registro de paciente asociado
+        if ($user->hasRole('Paciente')) {
+            $patient = $user->patient()->create([]); // Crear paciente asociado al usuario
+            return redirect()->route('admin.patients.edit', $patient->id);
+        }
+
         return redirect()->route('admin.users.index');
     }
 

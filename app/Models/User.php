@@ -72,4 +72,10 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    /* C36: Relaciones (en modelos) */
+    public function patient()
+    {
+        return $this->hasOne(Patient::class);
+    }
 }

@@ -1303,11 +1303,70 @@ Entonces, por qué usar `syncRoles` y no `roles()->sync`:
 - `syncRoles()` es un método del trait `HasRoles` → acepta nombres, IDs o modelos.
 - `syncRoles()` limpia los roles anteriores del usuario y asigna solo los nuevos de forma segura.
 Con este cambio no habrá errores y se **estará usando correctamente la lógica de Spatie**.
-##
-##
-##
-##
-##
+## C36: Relaciones (en modelos)
+La relación entre `User` y `Patient` es de uno a uno.
+A nivel de base de datos, la tabla `patients` tiene una columna `user_id`, lo que indica que cada paciente **pertenece a** un usuario (relación `belongsTo`). Por otro lado, cada usuario **tiene uno** (o ningún) paciente asociado (relación `hasOne`).
+Por eso, en el modelo `Patient`, se define:
+```php
+public function user()
+{
+    return $this->belongsTo(User::class);
+}
+```
+Y dentro del modelo de `User` está:
+```php
+public function patient()
+{
+    return $this->hasOne(Patient::class);
+}
+```
+Esto permite acceder fácilmente a los datos relacionados desde ambos lados de la relación: desde un usuario puedes obtener su perfil de paciente, y desde un paciente puedes saber a qué usuario pertenece. Etonces:
+- La tabla `patients` tiene una columna `user_id`, lo que significa que cada paciente está asocicado aun usuario.
+-Y la tabla `users` no tiene una columna `patient_id`, por lo que **la relación no se define desde la tabla `users` por clave foránea directa, sino que se infiere por medio del** `hasOne()`.
+- En más detalle se quiere decir:
+    - `patients.user_id` es la clave foránea.
+    - El modelo `Patient` es **el lado hijo** de la relación (usa `belongsTo`).
+    - El modelo `User` es **el lado padre** de la relación (usa `hasOne`), ya que un usuario puede tener un paciente, pero **no necesita una columna en su tabla para establecer esa relación**.
+- **Laravel** entiende la relación recorriendo desde el modelo `User` a `Patient` usando la clave `user_id` que está en la tabla `patients`.
+
+Además de la extensa expliación de la relación entre `Users` y `Patients`, esta última tambien está relaiconado con `BloodType`. En la tabla de `patiens` está la relación con `bloodType`:
+```php
+//Migración de `patients`
+$table->foreignId('blood_type_id')->...
+```
+Esto indica que cada paciente pertenece a un tipo de sangre, y se refleja en el modelo con:
+```php
+public function bloodType()
+{
+    return $this->belongsTo(BloodType::class);
+}
+```
+
+Y además está la realación a la inversa en el modelo `BloodType`:
+```php
+// app/Models/BloodType.php
+public function patients()
+{
+    return $this->hasMany(Patient::class);
+}
+```
+Esto permite obtener todos los pacientes que tienen un determinado tipo de sangre, por ejemplo: 
+```php
+$bloodType->patients;
+```
+d
+## C37: Usuario como paciente
+Dentro del controller de `UserController`, dentro del método `store` está lo siguiente:
+```php
+if ($user->hasRole('Paciente')) {
+            $patient = $user->patient()->create([]);
+            return redirect()->route('admin.patients.edit', $patient->id);
+        }
+```
+Este código hace que si el usuario en la creación tiene asignado el rol `Paciente`, entonces "crea un registro asociado en la tabla `patiens` usando la relación definida (`hasOne`) y redirige a la vista de edición del paciente. **Entonces crea automáticamente un** `patient` **si el usuario tiene el rol** `Paciente`
+## C38:
+## C39:
+## C40:
 ##
 ##
 ##

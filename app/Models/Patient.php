@@ -9,6 +9,7 @@ class Patient extends Model
 
     protected $fillable = [
         'user_id',
+        'date_of_birth',
         'blood_type_id',
         'allergies',
         'chronic_conditions',
@@ -18,7 +19,6 @@ class Patient extends Model
         'emergency_contact_name',
         'emergency_contact_relationship',
         'emergency_contact_phone',
-        'date_of_birth',
         'photo',
     ];
 

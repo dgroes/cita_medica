@@ -1519,7 +1519,299 @@ Column::make("Teléfono", "user.phone")
     ->format(fn($value) => FormatHelper::phone($value)),
 ```
 Mejorando la legibilidad además de un uso de reutilización.
-## C40:
+## C40: Helper dentro de una View de Blade
+En base al comentario extenso previo, con la creación del **helper** `FormatHelper` se puede formatear la salida de los datos para luego enseñarla en `PatientTable`. Pero además de esto, se puede utilizar dentro de una View de `.Blade` de la siguiente forma.
+Se tomará como ejemplo real el fichero `/views/admin/patients/edit.blade.php`. Dentro del fichero en la sección: "Tab content (Contenedor de contenido de las pestañas)" se hace uso de los datos del paciente (esto gracias al "compact" que se le pasa a la view desde el controller antes del renderizado), pero si se desea formatear dicho dato de: "56913249780" a "56 9 1324 9780", se deberá primero hacer esto:
+**Importación del Helper**:
+```php
+@php
+    $formattedPhone = \App\Helpers\FormatHelper::phone($patient->user->phone);
+@endphp
+```
+Con esto se crea una **variable temporal** a la cual se le dará uso. 
+- `\App\Helpers\FormatHelper`: **namespace** completo de la calse `FormatHelper` para aplicar su uso.
+- `::phone()`: Uso del **método estático** `phone()` de la clase `FormatHelper`. Como es estático, no se necesita crear una instancia de la clase.
+- `($patient->user->phone)` Número de teléfono del usuario relacionado con el paciente como argumento. **El dato de `$patient` se recibe desde el `Controller` de paciente, llega gracias al `compact`. Debido a esto se puede crear dicha variable.**
+- `$formattedPhone = ...`: El resultado de la función se guardará dentro de dicha variable. 
+
+**Uso del Helper en la view:**
+Luego dentro del mismo contenedor estará la siguiente línea:
+```php
+<span>{{ $patient->user->phone ? $formattedPhone : 'No disponible' }}</span>
+```
+Con el operador ternario se hace lo siguiente:
+- Condición: `$patient->user->phone` -> se evalúa si existe un valor en la propiedad `phone` del usuario (si no es `null`, vacío o `false`)
+- **Si es verdadero**: -> se imprime el valor de `$formattedPhone (ya formateado por el helper)`.
+- **Si es falso** -> se imprime el texto `No disponible`.
+
+**Todo el código usado de ejemplo sería:**
+```php
+@php
+    $formattedPhone = \App\Helpers\FormatHelper::phone($patient->user->phone);
+@endphp
+<div class="px-4 mt-4">
+    {{-- Contenido de cada tab --}}
+    <div x-show="tab === 'datos-personales'">
+
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <span class="text-gray-500 font-semibold text-sm">
+                    Teléfono:
+                </span>
+            <span>{{ $patient->user->phone ? $formattedPhone : 'No disponible' }}</span>
+            </div>
+            ...
+```
+s
+## C41: Contenedor principal con AlpineJS
+Dentro del fichero `resources/views/admin/patients/edit.blade.php` se hace uso de **AlpineJS**. [Alpine](https://alpinejs.dev/) es un framework JavaScript ligero para interactividad en el frontend Funciona similar a Vue pero dentro de HTML, lo que hace ideal para proyectos como Laravel con Blade.
+Siguiendo con el fichero `/patients/edit.blade.php`:
+### Declaración de estado (`x-data`):
+```php
+<div x-data="{ tab: 'datos-personales' }">
+```
+Esto **inicializa AlpineJS** con un objeto que contiene un estado llamado `tab`. Aquí se define que la pestaña activa por defecto será `"datos-personales"`. Es decir, cuando se carge la vista, estará visible la sección de datos personales.
+### Cambio de pestaña (`x-on:click`)
+```php
+<a href="#" x-on:click="tab = 'antecedentes'">
+```
+Cada `<a>` que representa una pestaña tiene un **evento** `click` que actualiza el estado `tab`. Ejemplo:
+```ts
+tab = 'antecedentes'
+```
+Cuando se hace clic en esa pestaña, se cambia el valor de `tab`, y eso afectará lo que se muestra.
+### Aplicar clases condicionales (`:class`)
+```html
+:class="{ 'clase-activa': tab === 'datos-personales', 'clase-inactiva': tab !== 'datos-personales' }"
+```
+Esto aplica clases CSS **dinámicamente** según cuál tab esté activa.
+### Mostrar contenido dinámicamente (`x-show`)
+```php
+<div x-show="tab === 'datos-personales'">
+```
+Este `div` solo será visible cuando `tab` sea igual a `datos-personales`.
+Así funciona con cada sección:
+- `x-show="tab === 'datos-personales'"`
+- `x-show="tab === 'antecedentes'"`
+- `x-show="tab === 'informacion-general'"`
+- `x-show="tab === 'contacto-emergencia'"`
+### Efecto esperado
+Cuando el usuario hace clic es una pestaña:
+- Se actualiza el valor de `tab`.
+- Se ocultan todas las secciones excepto la que coincide con `tab`.
+- Se aplican estilos que destacan la pestaña activa.
+### Código completo
+En caso de que se actualice el fichero, aquí está el código completo y el commit de referencia:
+```html
+<x-wire-card>
+            {{-- C41: Contenedor principal con AlpineJS --}}
+            <div class="" x-data ="{
+                tab: 'datos-personales' }">
+
+                {{-- Pestañas de navegación --}}
+                <div class="border-b border-gray-200 dark:border-gray-700">
+
+                    <ul class="flex flex-wrap -mb-px text-sm font-medium text-center text-gray-500 dark:text-gray-400">
+
+                        {{-- Pestaña: Datos personales --}}
+                        <li class="me-2">
+                            <a href="#" x-on:click="tab = 'datos-personales'"
+                                :class="{
+                                    'inline-flex items-center justify-center p-4 text-blue-600 border-b-2 border-blue-600 rounded-t-lg active dark:text-blue-500 dark:border-blue-500 group': tab === 'datos-personales',
+                                    'inline-flex items-center justify-center p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300 group': tab !== 'datos-personales'
+                                }">
+                                <i class="fa solid fa-user me-2"></i>
+                                Datos personales
+                            </a>
+                        </li>
+
+                        {{-- Pestaña: Antecedentes --}}
+                        <li class="me-2">
+                            <a href="#" x-on:click="tab = 'antecedentes'"
+                                :class="{
+                                    'inline-flex items-center justify-center p-4 text-blue-600 border-b-2 border-blue-600 rounded-t-lg active dark:text-blue-500 dark:border-blue-500 group': tab === 'antecedentes',
+                                    'inline-flex items-center justify-center p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300 group': tab !== 'antecedentes'
+                                }"
+                                aria-current="page">
+                                <i class="fa-solid fa-file-lines me-2"></i>
+                                Antecedentes
+                            </a>
+                        </li>
+
+                        {{-- Pestaña: Información General --}}
+                        <li class="me-2">
+                            <a href="#" x-on:click="tab = 'informacion-general'"
+                                :class="{
+                                    'inline-flex items-center justify-center p-4 text-blue-600 border-b-2 border-blue-600 rounded-t-lg active dark:text-blue-500 dark:border-blue-500 group': tab === 'informacion-general',
+                                    'inline-flex items-center justify-center p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300 group': tab !== 'informacion-general'
+                                }">
+                                <i class="fa-solid fa-info me-2"></i>
+                                Información General
+                            </a>
+                        </li>
+
+                        {{-- Pestaña: Contacto de emergencia --}}
+                        <li class="me-2">
+                            <a href="#" x-on:click="tab = 'contacto-emergencia'"
+                                :class="{
+                                    'inline-flex items-center justify-center p-4 text-blue-600 border-b-2 border-blue-600 rounded-t-lg active dark:text-blue-500 dark:border-blue-500 group': tab === 'contacto-emergencia',
+                                    'inline-flex items-center justify-center p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300 group': tab !== 'contacto-emergencia'
+                                }">
+                                <i class="fa-solid fa-phone me-2"></i>
+                                Contacto de emergencia
+                            </a>
+                        </li>
+                    </ul>
+
+                </div>
+
+                {{-- Tab content (Contenedor de contenido de las pestañas) --}}
+                {{-- C40: Helper dentro de una View de Blade --}}
+                @php
+                    $formattedPhone = \App\Helpers\FormatHelper::phone($patient->user->phone);
+                @endphp
+
+                {{-- Contenido de cada tab --}}
+                <div class="px-4 mt-4">
+
+                    {{-- Datos Pesonales --}}
+                    <div x-show="tab === 'datos-personales'">
+
+                        {{-- Componente de alerte(WireUI) --}}
+                        <x-wire-alert info title="Edicion de usuario" class="mb-4">
+
+                            <p>
+                                Para editar esta información, dirigete al
+                                <a href="{{ route('admin.users.edit', $patient->user) }}"
+                                    class="text-blue-500 hover:underline" target="_blank">
+                                    perfil del usuario
+                                </a>
+                                asociado a este paciente.
+                            </p>
+
+                        </x-wire-alert>
+
+                        {{-- Contenido de datos personales del paciente: --}}
+                        <div class="grid lg:grid-cols-2 gap-4">
+                            <div>
+                                <span class="text-gray-500 font-semibold text-sm">
+                                    Teléfono:
+                                </span>
+                                <span class="text-gray-900 text-sm ml-1">
+                                    {{ $patient->user->phone ? $formattedPhone : 'No disponible' }}
+                                </span>
+                            </div>
+                            <div>
+                                <span class="text-gray-500 font-semibold text-sm">
+                                    Email:
+                                </span>
+                                <span class="text-gray-900 text-sm ml-1">
+                                    {{ $patient->user->email ?? 'No disponible' }}
+                                </span>
+                            </div>
+                            <div>
+                                <span class="text-gray-500 font-semibold text-sm">
+                                    Dirección:
+                                </span>
+                                <span class="text-gray-900 text-sm ml-1">
+                                    {{ $patient->user->address ?? 'No disponible' }}
+                                </span>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    {{-- Antecedentes --}}
+                    <div x-show="tab === 'antecedentes'">
+
+                        <div class="grid lg:grid-cols-2 gap-2">
+
+                            {{-- Campo Alergias --}}
+                            <div>
+                                <x-wire-textarea label="Alergias conocidas" name="allergies">
+                                    {{ old('allergies', $patient->allergies) }}
+                                </x-wire-textarea>
+                            </div>
+
+                            {{-- Enfermedade crónicas --}}
+                            <div>
+                                <x-wire-textarea label="Enfermedades crónicas" name="chronic_conditions">
+                                    {{ old('chronic_conditions', $patient->chronic_conditions) }}
+                                </x-wire-textarea>
+                            </div>
+
+                            {{-- Historial Médico --}}
+                            <div>
+                                <x-wire-textarea label="Antecedentes quirúrgicos" name="surgical_history">
+                                    {{ old('surgical_history', $patient->surgical_history) }}
+                                </x-wire-textarea>
+                            </div>
+
+                            {{-- Historial Familiar --}}
+                            <div>
+                                <x-wire-textarea label="Antecedentes familiares" name="family_history">
+                                    {{ old('family_history', $patient->family_history) }}
+                                </x-wire-textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Información General --}}
+                    <div x-show="tab === 'informacion-general'">
+
+                        {{-- Edad del paciente --}}
+                        <x-wire-datetime-picker
+                           label="Fecha de nacimiento"
+                            name="date_of_birth"
+                            without-time="true"
+                            clearable="false"
+                            max="{{ now()->format('Y-m-d') }}"
+                            class="mb-4"
+                            :value="old('date_of_birth', $patient->date_of_birth)"
+                        />
+
+                        {{-- Selección de tipo de sangre --}}
+                        <x-wire-native-select label="Tipo de sangre" class="mb-4" name="blood_type_id">
+
+                            <option value="">Seleccione un tipo de sangre</option>
+
+                            @foreach ($bloodTypes as $bloodType)
+                                <option value="{{ $bloodType->id }}" @selected($bloodType->id === $patient->blood_type_id)>
+                                    {{ $bloodType->name }}
+                                </option>
+                            @endforeach
+                        </x-wire-native-select>
+
+                        {{-- Campo para observaciones --}}
+                        <x-wire-textarea label="Obervacones" name="observations">
+                            {{ old('observations', $patient->observations) }}
+                        </x-wire-textarea>
+                    </div>
+
+                    {{-- Contacto de Emergencia --}}
+                    <div x-show="tab === 'contacto-emergencia'">
+
+                        {{-- Nombre de contacto de emergencia --}}
+                        <div class="space-y-4">
+                            <x-wire-input label="Nombre del contacto de emergencia" name="emergency_contact_name"
+                                value="{{ old('emergency_contact_name', $patient->emergency_contact_name) }}" />
+
+                            {{-- Relación con el contacto de emergecia --}}
+                            <x-wire-input label="Relación con el contacto de emergencia"
+                                name="emergency_contact_relationship"
+                                value="{{ old('emergency_contact_relationship', $patient->emergency_contact_relationship) }}" />
+
+                            {{-- Teléfono del contacto de emergencia --}}
+                            <x-wire-input label="Teléfono del contacto de emergencia" name="emergency_contact_phone"
+                                value="{{ old('emergency_contact_phone', $patient->emergency_contact_phone) }}"
+                                placeholder="Ingrese el número de teléfono del contacto de emergencia" />
+                        </div>
+                    </div>
+
+                </div>
+        </x-wire-card>
+```
+Commit de github: 
 ##
 ##
 ##

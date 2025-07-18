@@ -1940,7 +1940,6 @@ Todo esto se logra gracias a **AlpineJs** y su sitema de reactividad.
 - Flowbire aporta estilos y estrucura, por ejemplo con las clases como `border-b-2`, `rounded-t-lg`, etc.
 - WireUI permite usar componentes como `<x-wire-card>`, `<x-wire-imput>`, etc. que mejoran el diseño y funcionalidad de los formularios.
 - AlpineJS es el motor que hace posible el cambio de pestañas sin recargar ni usar Livewire.
-
 ##
 ##
 ##

@@ -1811,8 +1811,136 @@ En caso de que se actualice el fichero, aquí está el código completo y el com
                 </div>
         </x-wire-card>
 ```
-Commit de github: 
-##
+*En el caso de posibles cambios, aquí el código del commit: [5db96c7](https://github.com/dgroes/cita_medica/commit/5db96c759c8f630362b9627f262ab3cbddcce36b).*
+## C42: Descomponiendo Edit en componentes Blade
+Previamente en el comentario **C41** se enfocó en el fihcero `resources/views/admin/patients/edit.blade.php`. Pues ahora se hace un cambio importante. Se hace una descomposición de dicha vista en componentes Bale reutilizables, manteniendo el código limpio, organizado y DRY (Don't Repeat Yourself). 
+### 1. `<x-tabs>` – Componente contenedor principal
+Este componente es el componente raíz del sistema de pestañas. Se encarga de:
+- Iniciar **AlpineJS** con un valor reactivo `active` que determina la pestaña activa.
+- Renderizar dos slots:
+    - `Header`: Donde se colocan los `<x-tab-link>` (las pestañas)
+    - el contenido principal (`$slot`): donde se colocan los `<x-tab-content>`.
+```php
+@props(['active' => 'default'])
+
+<div x-data="{ active: '{{ $active }}' }">
+    @isset($header)
+        <ul> {{ $header }} </ul>
+    @endisset
+
+    <div class="px-4 mt-4">
+        {{ $slot }}
+    </div>
+</div>
+```
+**Como se usa dentro de `edit.php`:**
+```php
+<x-tabs active="datos-personales">
+    <x-slot name="header">
+        <x-tab-link tab="datos-personales">...</x-tab-link>
+        <x-tab-link tab="antecedentes">...</x-tab-link>
+        ...
+    </x-slot>
+
+    <x-tab-content tab="datos-personales">...</x-tab-content>
+    <x-tab-content tab="antecedentes">...</x-tab-content>
+    ...
+</x-tabs>
+```
+Este componente es el cereblo del sistema: maneja el estado `active` de AlpineJS y lo expone a sus hijos.
+**Algo más de contexto:**
+En Blade, `{{ $slot }}` representa el **contenido que se pasa desde el componente padre** (el que lo llama) al componente hijo.
+En la parte de ``tabs.blade.php``:
+```php
+<div class="px-4 mt-4">
+    {{ $slot }}
+</div>
+```
+Esto quiere decir: dentro del `div` con clases `px-4 mt-4`, voy a renderizar todo el contenido que se ponga dentro del `<x-tabs>` cuando se use.
+**Y el contenido que se le pasa al ese slot es:**
+```php
+<x-tabs active="datos-personales">
+    <x-slot name="header">
+        {{-- Aquí van los <x-tab-link> --}}
+    </x-slot>
+
+    {{-- ESTE contenido va dentro de {{ $slot }} --}}
+    <x-tab-content tab="datos-personales">...</x-tab-content>
+    <x-tab-content tab="antecedentes">...</x-tab-content>
+    <x-tab-content tab="informacion-general">...</x-tab-content>
+    <x-tab-content tab="contacto-emergencia">...</x-tab-content>
+</x-tabs>
+```
+Entonces Blade hace internamente lo siguiente:
+```php
+<div class="px-4 mt-4">
+    <x-tab-content tab="datos-personales">...</x-tab-content>
+    <x-tab-content tab="antecedentes">...</x-tab-content>
+    ...
+</div>
+```
+**Ahora con `x-slot name="header"`:**
+Cuando se define el `<x-slot name="header">`, Blade lo interpreta como una variable especial (`$header`), que se puede usar en el contenedor así:
+```php
+@isset($header)
+    <div class="border-b ...">
+        <ul> {{ $header }} </ul>
+    </div>
+@endisset
+```
+Entonces
+- `{{ $slot }}`: Todo lo que está fuera del slot nombreado (contenido por defecto.)
+- `$header`: lo que está dentro de `<x-slot name="header">`
+### 2. `<x-tab-link> ` – Componente para las pestañas (navegación)
+Este componente representa una pestaña (como un botón) que:
+- Cambia el valor de `active` cuando se hace clic.
+- Muestra estilos distintos dependiendo de si la pestaña está activa o no (`active === '{{ $tab }}'`).
+```php
+@props(['tab' => 'default'])
+
+<li class="me-2">
+    <a href="#" x-on:click="active = '{{ $tab }}'"
+       :class="{
+           '...text-blue...border-blue...': active === '{{ $tab }}',
+           '...hover:border-gray...': active !== '{{ $tab }}'
+       }">
+        {{ $slot }}
+    </a>
+</li>
+```
+**Como se usa en el `edit`:**
+```php
+<x-tab-link tab="informacion-general">
+    <i class="fa-solid fa-info me-2"></i> Información General
+</x-tab-link>
+```
+**Interacción** con `<x-tabs>`: cuando se hace clic en un ``x-tab-link`, cambia el estado `active` del `x-tabs` padre usando `x-on:click="active = 'informacion-general'"`. 
+### 3. `<x-tab-content>` – Componente para mostrar contenido condicionalmente
+Este componente muesta el contenido de una pestaña solo si está activa, utilizando `x-show`.
+```php
+@props(['tab' => 'default'])
+
+<div x-show="active === '{{ $tab }}'">
+    {{ $slot }}
+</div>
+```
+Interacción en `edit`:
+```php
+<x-tab-content tab="contacto-emergencia">
+    {{-- Aquí va el contenido del formulario para contacto de emergencia --}}
+</x-tab-content>
+```
+**Interacción** con `<x-tabs>`: este contenido se mostrará solo si `active === 'contacto-emergencia'`.
+### Todo junto:
+- `<x-tabs>` inicializa x-data="{ active: 'datos-personales' }".
+- Los `<x-tab-link>` actualizan la variable active al hacer clic.
+- Los `<x-tab-content>` se muestran o se ocultan dinámicamente según el valor actual de active.
+Todo esto se logra gracias a **AlpineJs** y su sitema de reactividad.
+**Importante tener en mente:**
+- Flowbire aporta estilos y estrucura, por ejemplo con las clases como `border-b-2`, `rounded-t-lg`, etc.
+- WireUI permite usar componentes como `<x-wire-card>`, `<x-wire-imput>`, etc. que mejoran el diseño y funcionalidad de los formularios.
+- AlpineJS es el motor que hace posible el cambio de pestañas sin recargar ni usar Livewire.
+
 ##
 ##
 ##

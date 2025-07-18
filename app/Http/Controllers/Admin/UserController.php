@@ -70,6 +70,12 @@ class UserController extends Controller
             return redirect()->route('admin.patients.edit', $patient->id);
         }
 
+        //Si el usuario es de tipo Doctor, redirigir a la vista de edición de Doctor
+        if ($user->hasRole('Doctor')) {
+            $doctor = $user->doctor()->create([]); // Crear doctor asociado al usuario
+            return redirect()->route('admin.doctors.edit', $doctor);
+        }
+
         return redirect()->route('admin.users.index');
     }
 
@@ -112,7 +118,7 @@ class UserController extends Controller
         $user->update($data);
 
         // Si se proporciona una nueva contraseña, actualizarla
-        if($request->password){
+        if ($request->password) {
             $user->password = bcrypt($request->password);
             $user->save();
         }

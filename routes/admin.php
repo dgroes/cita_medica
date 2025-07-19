@@ -19,8 +19,9 @@ Route::resource('roles', RoleController::class);
 Route::resource('users', UserController::class);
 
 // Rutas de pacientes
-Route::resource('patients', PatientController::class);
+Route::resource('patients', PatientController::class)
+    ->only(['index', 'edit', 'update']);
 
 //Rutas de doctores
 Route::resource('doctors', DoctorController::class)
-    ->except(['create', 'store', 'show']);
+    ->only(['index', 'edit', 'update']);

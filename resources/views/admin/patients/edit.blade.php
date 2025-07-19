@@ -22,8 +22,12 @@
                     <img src="{{ $patient->user->profile_photo_url }}" alt="{{ $patient->user->name }}"
                         class="size-20 rounded-full object-cover object-center">
                     <div>
-                        <p class="text-2xl font-bold text-gray-900">
+                        <p class="text-2xl font-bold text-gray-900 mb-1">
                             {{ $patient->user->name }}
+                        </p>
+
+                        <p class="text-sm font-semibold text-gray-500">
+                            RUN: {{ $patient->user->dni ?? 'Sin RUN' }}
                         </p>
                     </div>
                 </div>

@@ -21,7 +21,12 @@ class DoctorController extends Controller
      */
     public function edit(Doctor $doctor)
     {
-        return view('admin.doctors.edit', compact('doctor'));
+        // Traer solo el id y el name de las especialidades
+        $specialities = \App\Models\Speciality::select('id', 'name')->get();
+
+        // Traer todas las especialidades
+        // $specialities = \App\Models\Speciality::all();
+        return view('admin.doctors.edit', compact('doctor', 'specialities'));
     }
 
     /**
@@ -29,14 +34,20 @@ class DoctorController extends Controller
      */
     public function update(Request $request, Doctor $doctor)
     {
-        //
+        $data = $request->validate([
+            'speciality_id' => 'nullable|required|exists:specialities,id',
+            'medical_license_number' => 'nullable|required|string|max:255|unique:doctors,medical_license_number,' . $doctor->id,
+            'biography' => 'nullable|required|string|max:1000',
+        ]);
+        $doctor->update($data);
+
+        session()->flash('swal', [
+            'title' => 'Doctor actualizado',
+            'text' => 'El doctor ha sido actualizado correctamente.',
+            'icon' => 'success',
+        ]);
+
+        return redirect()->route('admin.doctors.edit', $doctor->id);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Doctor $doctor)
-    {
-        //
-    }
 }

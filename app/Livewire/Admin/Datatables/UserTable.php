@@ -22,11 +22,6 @@ class UserTable extends DataTableComponent
     public function configure(): void
     {
         $this->setPrimaryKey('id');
-
-        // $this->setSearchPlaceholder("Buscar");
-        // $this->setSearchIcon('heroicon-m-magnifying-glass');
-
-        // $this->setSearch('Laravel');
     }
 
     public function columns(): array

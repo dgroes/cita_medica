@@ -14,14 +14,14 @@ class BloodTypeSeeder extends Seeder
     public function run(): void
     {
         $bloodTypes = [
-            'A+',
-            'A-',
-            'B+',
-            'B-',
-            'AB+',
-            'AB-',
-            'O+',
-            'O-'
+            'A+', //1
+            'A-', //2
+            'B+', //3
+            'B-', //4
+            'AB+', //5
+            'AB-', //6
+            'O+', //7
+            'O-' //8
         ];
 
         foreach ($bloodTypes as $types) {

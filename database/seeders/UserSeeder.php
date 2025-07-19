@@ -14,22 +14,7 @@ class UserSeeder extends Seeder
     public function run(): void
     {
         $users = [
-            [
-                'name' => 'Maximiliano Gallegos',
-                'email' => 'maxi@gmail.com',
-                'password' => bcrypt('maxi1234'),
-                'dni' => '20345267-k',
-                'phone' => '56910206979',
-                'address' => 'Calle Falsa 123, Gran Capital',
-            ],
-            [
-                'name' => 'José Alarcón',
-                'email' => 'jose@gmail.com',
-                'password' => bcrypt('jose1234'),
-                'dni' => '14443200-3',
-                'phone' => '56920234790',
-                'address' => 'Avenida Siempre Viva 456, San Luis',
-            ],
+            // Usuarios reservados para Doctores (id:1 - id:9)
             [
                 'name' => 'Sandor Clegane',
                 'email' => 'sandor@gmail.com',
@@ -102,6 +87,8 @@ class UserSeeder extends Seeder
                 'phone' => '56976543210',
                 'address' => 'Valle de Arryn, Poniente',
             ],
+
+            // Usuarios reservada para Pacientes (id:10 - id:24)
             [
                 'name' => 'Stannis Baratheon',
                 'email' => 'stannis@gmail.com',
@@ -142,13 +129,100 @@ class UserSeeder extends Seeder
                 'phone' => '56972345678',
                 'address' => 'Naath, Essos',
             ],
+            [
+                'name' => 'Jon Snow',
+                'email' => 'jon.snow@gmail.com',
+                'password' => bcrypt('jonsnow123'),
+                'dni' => '19345211-7',
+                'phone' => '56973456781',
+                'address' => 'El Muro, Guardia de la Noche, Poniente',
+            ],
+            [
+                'name' => 'Sansa Stark',
+                'email' => 'sansa@gmail.com',
+                'password' => bcrypt('sansa123'),
+                'dni' => '16543211-9',
+                'phone' => '56978945612',
+                'address' => 'Invernalia, Norte, Poniente',
+            ],
+            [
+                'name' => 'Eddard Stark',
+                'email' => 'ned.stark@gmail.com',
+                'password' => bcrypt('nedstark123'),
+                'dni' => '14326789-2',
+                'phone' => '56970011223',
+                'address' => 'Invernalia, Norte, Poniente',
+            ],
+            [
+                'name' => 'Daenerys Targaryen',
+                'email' => 'daenerys@gmail.com',
+                'password' => bcrypt('daenerys123'),
+                'dni' => '14987654-3',
+                'phone' => '56975643210',
+                'address' => 'Meereen, Essos',
+            ],
+            [
+                'name' => 'Robb Stark',
+                'email' => 'robb.stark@gmail.com',
+                'password' => bcrypt('robbstark123'),
+                'dni' => '15432789-4',
+                'phone' => '56973334455',
+                'address' => 'Aguasdulces, Tridente, Poniente',
+            ],
+            [
+                'name' => 'Cersei Lannister',
+                'email' => 'cersei@gmail.com',
+                'password' => bcrypt('cersei123'),
+                'dni' => '12345678-9',
+                'phone' => '56975558888',
+                'address' => 'Desembarco del Rey, Poniente',
+            ],
+            [
+                'name' => 'Jaime Lannister',
+                'email' => 'jaime@gmail.com',
+                'password' => bcrypt('jaime123'),
+                'dni' => '13335577-k',
+                'phone' => '56979991122',
+                'address' => 'Roca Casterly, Poniente',
+            ],
+            [
+                'name' => 'Theon Greyjoy',
+                'email' => 'theon@gmail.com',
+                'password' => bcrypt('theon1234'),
+                'dni' => '16667788-4',
+                'phone' => '56978889900',
+                'address' => 'Pyke, Islas del Hierro',
+            ],
+            [
+                'name' => 'Ygritte',
+                'email' => 'ygritte@gmail.com',
+                'password' => bcrypt('ygritte123'),
+                'dni' => '15554321-1',
+                'phone' => '56974445566',
+                'address' => 'Más allá del Muro, Tierras de los Salvajes',
+            ],
+            [
+                'name' => 'Tormund Giantsbane',
+                'email' => 'tormund@gmail.com',
+                'password' => bcrypt('tormund123'),
+                'dni' => '16789012-5',
+                'phone' => '56978887766',
+                'address' => 'Tierras del Norte Salvaje',
+            ],
 
         ];
 
         /* C28: Asignación de Rol a User con Laravel Permission */
-        foreach ($users as $userData) {
+        foreach ($users as $index => $userData) {
             $user = User::factory()->create($userData);
-            $user->assignRole('Doctor'); // Asignar rol de Doctor
+
+            if ($index < 9) {
+                // Los primeros 9 son Doctores
+                $user->assignRole('Doctor');
+            } else {
+                // Del 10 en adelante son Pacientes
+                $user->assignRole('Paciente');
+            }
         }
     }
 }

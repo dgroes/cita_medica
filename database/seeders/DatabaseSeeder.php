@@ -17,7 +17,7 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class, // Seed de Doctores
             BloodTypeSeeder::class, // Seed de tipos de sangre
             SpecialitySeeder::class,
-            DoctorSeeder::class, // Seed de doctores
+            // DoctorSeeder::class, // Seed de doctores
             /* PatientSeeder::class, */ // Seed de pacientes (manteción)
 
         ]);

@@ -16,7 +16,6 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->foreignId('speciality_id')->nullable()->constrained('specialities')->onDelete('set null');
             $table->string('medical_license_number')->unique()->nullable();
-            $table->string('phone')->nullable();
             $table->text('biography')->nullable();
             $table->timestamps();
         });

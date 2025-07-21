@@ -17,6 +17,7 @@ return new class extends Migration
             $table->foreignId('speciality_id')->nullable()->constrained('specialities')->onDelete('set null');
             $table->string('medical_license_number')->unique()->nullable();
             $table->text('biography')->nullable();
+            $table->boolean('is_active')->default(true); //Para desabilitar un doc
             $table->timestamps();
         });
     }

@@ -38,6 +38,7 @@ class DoctorController extends Controller
             'speciality_id' => 'nullable|required|exists:specialities,id',
             'medical_license_number' => 'nullable|required|string|max:255|unique:doctors,medical_license_number,' . $doctor->id,
             'biography' => 'nullable|required|string|max:1000',
+            'is_active' => 'boolean'
         ]);
         $doctor->update($data);
 

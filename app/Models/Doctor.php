@@ -12,6 +12,7 @@ class Doctor extends Model
         'medical_license_number',
         'phone',
         'biography',
+        'is_active'
     ];
 
     public function user()

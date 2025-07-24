@@ -33,6 +33,8 @@
 
     <!-- Styles -->
     @livewireStyles
+
+    @stack('css')
 </head>
 
 <body class="font-sans antialiased">
@@ -87,11 +89,13 @@
 
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        form.submit();                    }
+                        form.submit();
+                    }
                 });
             })
         })
     </script>
+    @stack('js')
 </body>
 
 </html>

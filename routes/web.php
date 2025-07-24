@@ -18,3 +18,10 @@ Route::middleware([
         return view('dashboard');
     })->name('dashboard');
 });
+
+// Ruta de prueba
+Route::get('/test', function () {
+    $schedule = \App\Models\Schedule::find(1);
+    return $schedule->start_time;
+})->name('test');
+

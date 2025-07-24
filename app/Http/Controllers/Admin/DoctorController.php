@@ -51,4 +51,9 @@ class DoctorController extends Controller
         return redirect()->route('admin.doctors.edit', $doctor->id);
     }
 
+    /* C43: Horarios de Doctores */
+    public function schedules(Doctor $doctor){
+        return view('admin.doctors.schedules', compact('doctor'));
+    }
+
 }

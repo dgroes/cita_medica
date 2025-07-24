@@ -24,4 +24,10 @@ class Doctor extends Model
     {
         return $this->belongsTo(Speciality::class);
     }
+
+    /* C44: Gestión de horarios */
+    public function schedules()
+    {
+        return $this->hasMany(Schedule::class);
+    }
 }

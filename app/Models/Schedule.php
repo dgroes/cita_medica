@@ -10,8 +10,7 @@ class Schedule extends Model
     protected $fillable = [
         'doctor_id',
         'day_of_week',
-        'start_time',
-        'end_time',
+        'start_time'
     ];
 
     /* Casteo de 'day_of_week', start_time' y 'end_time '*/
@@ -21,7 +20,6 @@ class Schedule extends Model
     protected $casts = [
         'day_of_week' => 'integer',
         'start_time' => 'datetime',
-        'end_time' => 'datetime',
     ];
 
     public function doctor()

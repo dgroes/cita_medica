@@ -976,7 +976,33 @@ $this->dispatch('swal', [
 ]);
 ```
 Sin embargo, no es necesario y lo recomendable sería sin un formato array y que seá como se monstró previamente. 
-## C47:
+## C47: Archivo de configuración personalizado
+**Cambios:**
+Además de lo principal de este comentario, es importante que hasta este punto se relizaron cambios.
+- La migración `database/migrations/2025_07_23_163413_create_schedules_table.php` ya no tiene `end_time`
+- El model `app/Models/Schedule.php` Ya no posee `end_time`
+
+La propiedad `end_time` no estaba siendo utilizada y no aportaba valor en la lógica actual del sistema. Dado que lo realmente relevante es la hora de inicio (`start_time`), se optó por eliminar el campo para simplificar la estructura y aumentar la flexibilidad futura. Esto permitirá adaptar los horarios sin estar limitados a una hora de término fija.
+
+En Laravel existen los ficheros llamados **"archivos de configuración personalizados"**. Estos son creados manualmente dentro del directorio `config/`, que es donde Laravel guarda toda la configuración del sistema. 
+Laravel permite que se puedan acceder ahí facilmente. en este caso `config/schedule.php` guarda parámetros reutilizables para la gestión de horarios.
+```php
+// app/Livewire/Admin/ScheduleManager.php
+$this->days = config('schedule.days');
+    $this->apointment_duration = config('schedule.appoiment_duration');
+    $this->start_time = config('schedule.start_time');
+    $this->end_time = config('schedule.end_time');
+```
+Su acceso con se puede ver se sencillo, con `config` segido del nombre del fichero y el dato.
+### Ventajas de usar archivos `config/`
+1. **Centralización de valores constantes**
+En vez de repetir valores como "`08:00:00`" o "`Lunes`" por todo el código, los defines una sola vez.
+2. **Facilidad para cambiar parámetros**
+Si algún día quieres cambiar la hora de inicio a "`09:00:00`", lo haces una vez en `config/schedule.php` y se actualiza en todo el sistema.
+3. **Separación de lógica y configuración**
+El código (`ScheduleManager`) se concentra en su funcionalidad, y no se ensucia con valores mágicos (hardcoded).
+4. **Escalabilidad**
+Si en el futuro necesitas múltiples configuraciones por tipo de usuario o clínica, puedes expandir este archivo fácilmente.
 ## C48:
 ## C49:
 ## C50:

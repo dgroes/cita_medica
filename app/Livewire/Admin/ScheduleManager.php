@@ -34,7 +34,7 @@ class ScheduleManager extends Component
             Carbon::createFromTimeString('08:00:00'),
             '1 hour',
             Carbon::createFromTimeString('18:00:00')
-        );
+        )->excludeEndDate(); ## Excluir de las 18:00 hasta las 19:00
     }
 
     public function mount()

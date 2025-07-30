@@ -863,4 +863,87 @@ Entonces gracias a esto
 - El layout es lipio y reutilizable
 - Los scripts necesarios para `x-data="data()` de (Alpine.js) llegan correctamente.
 - Livewire puede hacer binding con `@entangle('schedule')` sin errores de JS
-##
+## C46: Marcado de horarios
+Dentro del fichero `resources/views/livewire/admin/schedule-manager.blade.php` hay columnas de los días de la semana en base a las horas del día entre 1 hora. Creando los ckecks para marcar los horarios, dentro de ahí está el botón todos para el día y todos para la hora completa. Para que dichos ckecks funcione se deberá crear unos métodos.
+>Antes de seguir con los métodos es importante tener en cuenta lo siguiente: 
+> - `$el` es una referencia al input actual en Alpine.js
+>  - `$el.checked` dice si el checkbox está activo
+>  - `:checked="..."` es la forma reactiva de Alpine para marcar o desmarcar inputs en base a un valor booleano.
+
+| Acción                                              | Método                     |
+| --------------------------------------------------- | -------------------------- |
+| Marcar toda una hora en un día                      | `toggleHourBlock()`        |
+| Ver si toda una hora en un día está marcada         | `isHourBlockChecked()`     |
+| Marcar toda una hora en todos los días              | `toggleFullHourBlock()`    |
+| Ver si toda una hora en todos los días está marcada | `isFullHourBlockChecked()` |
+
+### Primer Método:**
+```js
+toggleHourBlock(indexDay, hourBlock, checked) {
+    let hour = new Date(`1970-01-01T${hourBlock}`);
+    for ($i = 0; $i < this.intervals; $i++) {
+        let startTime = new Date(hour.getTime() + ($i * this.apointment_duration * 60000));
+        let formattedStartTime = startTime.toTimeString().split(' ')[0];
+        this.schedule[indexDay][formattedStartTime] = checked;
+    }
+}
+```
+Este método activa o desactiva **todos los intervalos de una hora específica para un solo día.**
+- Convierte el `hourBlock` (ej: `"08:00:00"`) en un objeto `Date`
+- Luego hace un bucle por la cantidad de `intervals`(por ejemplo,4 veces si cada intervalo es de 15 minutos)
+- Calcula los horarios de inicio (`startTime`) de cada intervalo: `08:00`, `08:15`, `08:30`, etc.
+- Marca cada uno en el array `schedule[indexDay][hora]` como `true` o `false` según `checked`.
+### Segundo método
+```js
+isHourBlockChecked(indexDay, hourBlock) {
+    let hour = new Date(`1970-01-01T${hourBlock}`);
+    for ($i = 0; $i < this.intervals; $i++) {
+        let startTime = new Date(hour.getTime() + ($i * this.apointment_duration * 60000));
+        let formattedStartTime = startTime.toTimeString().split(' ')[0];
+        if (!this.schedule[indexDay][formattedStartTime]) {
+            return false;
+        }
+    }
+    return true;
+}
+```
+Este verifica si **todos los intervalos de una hora específica están activados** par un día determinado
+- Igual que `toggleHourBlock`, recorre los intervalos.
+- Si encuentra al menos uno desactivado (`false` o `undefined`), devuelve false.
+- Si todos están activos, devuelve `true`.
+Este valor es usado para marcar el checkbox "**Todos**" de ese bloque horario de un día como marcado si todos sus intervalos está activos:
+```php
+:checked="isHourBlockChecked('{{ $indexDay }}', '{{ $hour }}')"
+```
+### Tercer método
+```js
+toggleFullHourBlock(hourBlock, checked) {
+    Object.keys(this.days).forEach((indexDay) => {
+        this.toggleHourBlock(indexDay, hourBlock, checked);
+    });
+}
+```
+Marca o desmarca todos los intervalos de esa **hora en todos los días**.
+- Recorre todos los días (`indexDay`)
+- Llama internamente a `toggleHourBlock(...)` por cada día
+Este se hace uso en el siguiente checkbox:
+```html
+<input type="checkbox"
+    x-on:click="toggleFullHourBlock('{{ $hour }}', $el.checked)"
+    :checked="isFullHourBlockChecked('{{ $hour }}')" />
+```
+### Cuarto método
+```js
+isFullHourBlockChecked(hourBlock) {
+    return Object.keys(this.days).every((indexDay) => {
+        return this.isHourBlockChecked(indexDay, hourBlock);
+    });
+}
+```
+Este método verifica si **todos los días tienen todos los intervalos activos** en esa hora
+- Recorre los días (`indexDay`) con `.every()`
+- Si algún día no están todos los intervalos activos -> devuelve `false`
+Este valor determina si el checkbox principal de una fila (una hora) debe aparecer marcado o no:
+```php
+:checked="isFullHourBlockChecked('{{ $hour }}')"
+```

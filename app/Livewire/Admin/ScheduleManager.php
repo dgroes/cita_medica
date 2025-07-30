@@ -3,6 +3,7 @@
 namespace App\Livewire\Admin;
 
 use App\Models\Doctor;
+use App\Models\Schedule;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Livewire\Attributes\Computed;
@@ -69,7 +70,31 @@ class ScheduleManager extends Component
 
     public function save()
     {
-        dd($this->schedule);
+        // dd($this->schedule);
+        $this->doctor->schedules()->delete();
+
+        foreach ($this->schedule as $day_of_week => $intervals) {
+            foreach ($intervals as $start_time => $isChecked)
+
+                if ($isChecked) {
+                    Schedule::create([
+                        'doctor_id' => $this->doctor->id,
+                        'day_of_week' => $day_of_week,
+                        'start_time' => $start_time,
+                        'end_time' => Carbon::createFromTimeString($start_time)
+                            ->addMinutes($this->apointment_duration)
+                            ->format('H:i:s')
+                    ]);
+                }
+        }
+        // Evento dede livewire
+        /* C46: Alerta de SweetAlert2 con Livewire */
+        $this->dispatch(
+            'swal',
+            icon: 'success',
+            title: 'Horario guardado correctamente',
+            text: 'El horario del doctor ha sido actualizado.'
+        );
     }
 
     public function render()

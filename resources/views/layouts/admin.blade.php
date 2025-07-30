@@ -71,6 +71,14 @@
         </script>
     @endif
 
+    {{-- Mensaje de guardado de horario --}}
+    {{-- C46: Alerta de SweetAlert2 con Livewire --}}
+    <script>
+        Livewire.on('swal', (data) => {
+            Swal.fire(data)
+        })
+    </script>
+
     <script>
         forms = document.querySelectorAll('.delete-form');
 

@@ -947,3 +947,42 @@ Este valor determina si el checkbox principal de una fila (una hora) debe aparec
 ```php
 :checked="isFullHourBlockChecked('{{ $hour }}')"
 ```
+## C46: Alerta de SweetAlert2 con Livewire
+Dentro del fichero `app/Livewire/Admin/ScheduleManager.php` en el método de creación (`save()`) está lo siguiente:
+```php
+$this->dispatch(
+            'swal',
+            icon: 'success',
+            title: 'Horario guardado correctamente',
+            text: 'El horario del doctor ha sido actualizado.'
+        );
+```
+Lo que hace `dispatch` es **emitir un evento desde un componente Livewire al navegador**. Este evento luego es escuchado por JavaScript en el layout `resources/views/layouts/admin.blade.php` de la siguiente forma:
+```html
+<!-- resources/views/layouts/admin.blade.php  -->
+<script>
+        Livewire.on('swal', (data) => {
+            Swal.fire(data)
+        })
+</script>
+```
+Entonces es ecuchado por JavaScript en el layout usando SweetAlert. el evento creado en el método se llama `swal`. El cual sería un **evento Livewire con un array de datos** enviados al frontend.
+Usualmete se haría el contenido de `swal` con un array así:
+```php
+$this->dispatch('swal', [
+    'icon' => 'success',
+    'title' => 'Horario guardado correctamente',
+    'text' => 'El horario del doctor ha sido actualizado.'
+]);
+```
+Sin embargo, no es necesario y lo recomendable sería sin un formato array y que seá como se monstró previamente. 
+## C47:
+## C48:
+## C49:
+## C50:
+## C51:
+## C52:
+## C53:
+## C54:
+## C55:
+## C56:

@@ -1003,9 +1003,291 @@ Si algún día quieres cambiar la hora de inicio a "`09:00:00`", lo haces una ve
 El código (`ScheduleManager`) se concentra en su funcionalidad, y no se ensucia con valores mágicos (hardcoded).
 4. **Escalabilidad**
 Si en el futuro necesitas múltiples configuraciones por tipo de usuario o clínica, puedes expandir este archivo fácilmente.
-## C48:
-## C49:
-## C50:
+## C48: Enum personalizado
+En este punto se crearon los ficheros de model y migrate de `Appoiment`, dentro de la creación de la tabla está la línea:
+```php
+$table->tinyInteger('status')->default(1);
+```
+Está la opción de usar un `enum`, similar a esto:
+```php
+$table->enum('status', [
+                '1' => 'Scheduled',
+                '2' => 'Completed',
+                '3' => 'Cancelled'
+            ])->default('1');
+```
+Pero de esta segunda forma no puede ser escalable a futuro, si quisiera agregar un nuevo estatud se debería modificar la migración, eso no es bueno.
+Con el comando `php artisan make:enum AppointmentEnum` se creará un fichero `enum` de PHP. Pero antes, un **enum (enumeración)** es un tipo de clase que representa un conjunto fijo de valores posibles. En vez de usar números "mágicos" o constantes sueltas (`1`, `2`, `3`), se le **puede darles un nombre legible y significativo**
+```php
+// app/Enums/AppointmentEnum.php
+<?php
+
+namespace App\Enums;
+
+enum AppointmentEnum: int
+{
+    case SCHEDULED = 1;
+    case COMPLETED = 2;
+    case CANCELLED = 3;
+}
+```
+En este fihcero se definen 3 estados posibles para una cita(`appoiment`). En lugar de escribir un código como: `$appointment->status === 2` se puede hacer algo mejor: `$appointment->status === AppointmentEnum::COMPLETED`, añadiendo **más legibilidad, menos errores, más mantenible**
+Ahora su relación en este caso está con `Appoiment`, entonces debería estar esto en el modelo:
+```php
+// app/Models/Appointment.php
+protected $casts = [
+        'date' => 'date',
+        'start_time' => 'datetime',
+        'end_time' => 'datetime',
+        'status' => AppointmentEnum::class,
+    ];
+```
+Está dentro de `$casts`. Aquí lo que se le dice a Laravel sería: *Cuando lea el campo `status` de la base de datos, conviértelo automáticamente al tipo `AppointmentEnum`. Y cuando lo guarde, conviértelo desde `AppointmentEnum` al número correspondiente.*
+**Dando ventajas:**
+- Se **evita confusión** con números.
+- Se **centraliza** los posibles estados.
+- Se puede añadir **métodos personalizados** en el enum si se desea.
+- Funciona bien con validaciones o formularios (`$enum->name`, `$enum->value`, etc.).
+## C49: Buscador de citas médicas (1)
+Comentario con el comentario anterior y en base a los avances de los commits: 
+- 63132130165299db3cd453030ab1b6274b7ffb15
+- d4774487bafcbdbd0c24a22d7c6dc14aa62a236b
+- 572ca0cbf330c6ca2c1b033335ecbcf8e5ded034
+- a68da47dd76beda40d0eae47b4d30f5e3b4ab998
+- 0c3d6d154aace1becc9e94b2b2d3912194b7ca8c
+- 026aefd71a369b9c5756e4719ed5c3585d367d43
+
+Para tener una visualización de los datos relacionado a una cita, es decir, doctor, día, hora, especialidad, etc. Se creó el siguiente componente Livewire:
+```bash
+php artisan make:livewire Admin/AppointmentManager
+-> app/Livewire/Admin/AppointmentManager.php
+-> resources/views/livewire/admin/appointment-manager.blade.php
+```
+### La View
+Lo primero, dentro de `resources/views/livewire/admin/appointment-manager.blade.php` estará el frontal, tentiendo partes importantes como:
+```html
+<x-wire-input
+    label="Fecha"
+    type="date"
+    wire:model="search.date"
+    placeholder="Selecciona una fecha"
+/>
+```
+Dentro del fichero hay un `x-wire-input` y dos`x-wire-select` además un botón con `wire:click="searchAvailability"`. **Livewire permite crear componentes interactivos y dinámicos** usando Blade + PHP, **sin usar JS directamente** como sería este caso. Entonces `wire:model` y `wire:click`, etc. son "**directivas de Livewire**" que **conectan HTML del componente (Blade) con la clase Livewire correspondiente**.
+1. **Binding bidireccional**
+En `wire:model="search.date"` pasa lo siguiente:
+- Se hace binding bidireccional (dos vías) entre el input y el compoente PHP
+- En la clase `AppointmentManager` se tiene lo siguiente:
+```php
+public $search = [
+    'date' => '',
+    'hour' => '',
+    'speciality_id' => '',
+];
+```
+- Entonces, cada vez que el usuario selecciona una **nueva fecha**, automáticamente se actualiza `$search['date']` en el componente Livewire sin recargar la página.
+- Si desde PHP se cambia `$this->search['date']` tambien se actualiza en el input en tiempo real.
+2. **Botón ejecutador**
+El componente botón posee dentro de el `wire:click="searchAvailability"` lo que hace:
+- le dice a Livewire que **ejecute el método** `searchAvailability()` del componente Livewire (`AppointmentManager.php`) **cuando se haga clic en el botón**
+- Es como un `@click` de Vue, o un `onclick`, pero funciona sin tener que escribir JS manualmente
+3. **Que hacen los estados?**
+Entonces está `wire:model`, esto es la forma en que Livewire **"escucha" y sincroniza automáticamente los inputs del frontend con el backend PHP**. es decir:
+- Cada input queda enlazado con una **propiedad pública del componente PHP**
+- Livewire se encarga del estado, del DOM, del AJAX y del renderizado parcial, **todo automáticamente**.
+- Esto internamente funcioaría así
+    - **Livewire** usa **AJAX por detrás del DOM**, cada vez que un dato cambia o haces clic en un botón.
+    - Actualiza el backend con ese valor.
+    - Ejecuta el método correspondiente (como `searchAvailability`)
+    - Y devuelve solo el fragmento del HTML que cambió (sin recargar la página entera).
+### La clase
+1. **Propiedades public del componente**
+En la sección: 
+```php
+public $search = [
+    'date' => '',
+    'hour' => '',
+    'speciality_id' => '',
+];
+
+public $specialties = [];
+```
+Aquí `$search` guarda los datos ingresados por el usuario en el buscador (fecha, hora y especialidad). Almacenados para luegos hacer la búsqueda. Con `specialties` se contendrá todas las especialidades disponibles (consultadas en la BD en `mount()`).
+2. Método ``mount()` 
+En el método está lo siguiente:
+```php
+public function mount()
+{
+    $this->specialties = Speciality::all();
+
+    # Sacar hora actual
+    $this->search['date'] = now()->hour >= 12
+        ? now()->addDay()->format('Y-m-d')
+        : now()->format('Y-m-d');
+}
+```
+- Al ser un método `mount` (**componente de Livewire que se ejecuta una sola vez al momento de inicializar o montar el componente en la vista**) hace la inicialización del componente.
+- Carga toas las especialidades desde la BD.
+- Si la hora actual es espues de las 12:00, se establece la fecha por defecto como el **día siguiente**, si es antes, se una el **día actual**
+    - Esto impide que se pueda agendar en el mismo día si ya es muy tarde.
+4. Propieda computada. 
+Al igual que está en `app/Livewire/Admin/ScheduleManager.php` aquí tenemos, pero con alguna diferencia:
+```php
+#[Computed()]
+public function hourBlocks()
+{
+    return CarbonPeriod::create(
+        Carbon::createFromTimeString(config('schedule.start_time')),
+        '1 hour',
+        Carbon::createFromTimeString(config('schedule.end_time'))
+    )->excludeEndDate();
+}
+```
+- Devuelve un rango de bloques horarios desde `start_time` hasta `end_time` en intervalos de 1 hora. 
+- Usa la una configuración de `config/schedule.php`, mencionado en **C47**. (ejemplo: `"start_time" => "08:00" ` y `"end_time" => "18:00")`).
+- El `excludeEndDate()` impide que se incluya la última hora (como `18:00-19:00`).
+5. **Método principal**
+Este método es llamado cuando se quiere buscar disponibilidad. (el click de la view: `wire:click="searchAvailability"`).
+```php
+public function searchAvailability(AppointmentService $service)
+{
+    $this->validate([
+        'search.date' => 'required|date|after_or_equal:today',
+        'search.hour' => [
+            'required',
+            'date_format:H:i:s',
+            Rule::when($this->search['date'] === now()->format('Y-m-d'), [
+                'after_or_equal:' . now()->format('H:i:s'),
+            ])
+        ],
+    ]);
+}
+```
+- Valida que la fecha sea obligatoria, con formato válido y igual o posterior a hoy.
+- Valida que la hora sea obligatoria y conformato `H:i:s`.
+- Valida si la fecha es **hoy**, la hora debe ser igual o posterior a la hora actual.
+6. **Servicio como parámetro**
+Al definir el método `searchAvailability` pasa lo siguiente:
+```php
+public function searchAvailability(AppointmentService $service)
+```
+Como se puede ver, el método **está recibiendo un servicio(`AppointmentService`) como parametro**. Técnica común en Laravel llamada: "**Inyección de dependencias (Dependency Injection)**". *Saber más del servicio en **C50***.
+Laravel tiene un **contenedor de servicios** que es capaz de detectar automáticamente las clases que necesita un método y crearlas e inyectarlas automáticamente. Entonces cuando se hace `public function searchAvailability(AppointmentService $service)` Laravel dice internamente: *"Este método necesita un `AppointmentService` ¿existe una clase asi? Si!!, entonces la creo automáticamente y la paso como argumento"*
+7. **Buscado de la disponibilidad**:
+Dentro del método `searchAvailability` luego de la validación está
+```php
+$availability = $service->searchAvailability(...$this->search);
+```
+Esto llama al método `searchAvailability()` del servicio, inyectado automáticamente por Livewire. Y usa un **operador de desempaquetado** `...` para pasar `date`, `hour` y `speciality_id` como argumentos individuales.
+8. **Conexión a la view**
+Todo esto funcioa gracías al render:
+```php
+public function render()
+{
+    return view('livewire.admin.appointment-manager');
+}
+```
+Que devuelve la vista que se rendiza las propiedades como `$specialities` y los resultados de la busqueda
+## C50: Buscador de citas médicas (2)
+Comentario con el comentario anterior y en base a los avances de los commits: 
+- 63132130165299db3cd453030ab1b6274b7ffb15
+- d4774487bafcbdbd0c24a22d7c6dc14aa62a236b
+- 572ca0cbf330c6ca2c1b033335ecbcf8e5ded034
+- a68da47dd76beda40d0eae47b4d30f5e3b4ab998
+- 0c3d6d154aace1becc9e94b2b2d3912194b7ca8c
+- 026aefd71a369b9c5756e4719ed5c3585d367d43
+
+Luego de crear la migración, modelo y controlador y sus views principales para `Appointment`. Se crea ahora un nuevo componente Livewire:
+```bash
+php artisan make:livewire Admin/AppointmentManager
+```
+Creando así los ficheros: `app/Livewire/Admin/AppointmentManager.php` y `resources/views/livewire/admin/appointment-manager.blade.php`. Además de esto se deberá crear un Service: `app/Services/AppointmentService.php`.
+Un **Service** es una clase cuya responsabilidad es **encapsular lógica de negocio compleja o reutilizable** que no encaja directamente en un modelo, controlador o componente Livewire. Es similar a la función de un **helper**, pero con un enfoque más organizado, mantenible y orientado a buenas prácticas. Aquí algunas diferencias entre **Helper** y **Service**.
+| Helper                                      | Service                             |
+| ------------------------------------------- | ----------------------------------- |
+| Funciones sueltas (a veces globales)        | Clases con métodos bien definidos   |
+| Sin estado, procedural                      | Orientado a objetos                 |
+| Difícil de testear o mantener cuando crecen | Más limpio, testeable y desacoplado |
+| Rápido para cosas simples                   | Escalable para lógica compleja      |
+En base a este caso, la clase `AppointmentService` sería la encargada de encapsular la lógica compleja de la obtención de doctores disponibles con sus horarios y turnos para poder agendar una cita médica.
+Este **Service** es llamado `app/Livewire/Admin/AppointmentManager.php` dentro de su método publico: `searchAvailability`. Se separa dicha lógica y metida en un **Service** para:
+- **Evitar sobrecargar el componente Liveweire** (`AppointmentManager`)
+- **Separar responsabilidades (SRP del SOLID)**
+- **Reutilizar esa lógica desde otros lugares** (por ejemplo desde un Job, Controller o API)
+### La consulta
+Actualmente la consulta sería:
+```php
+$doctors = Doctor::whereHas('schedules', function ($q) use ($date, $hourStart, $hourEnd) {
+            $q->where('day_of_week', $date->dayOfWeek)
+                ->where('start_time', '>=', $hourStart)
+                ->where('start_time', '<', $hourEnd);
+        })
+            ->when($speciality_id, function ($q, $speciality_id) {
+                return $q->where('speciality_id', $speciality_id);
+            })
+            ->with([
+                'user',
+                'speciality',
+                'schedules' => function ($q) use ($date, $hourStart, $hourEnd) {
+                    $q->where('day_of_week', $date->dayOfWeek)
+                        ->where('start_time', '>=', $hourStart)
+                        ->where('start_time', '<', $hourEnd);
+                },
+                'appointments' => function ($q) use ($date, $hourStart, $hourEnd) {
+                    $q->whereDate('date', $date)
+                        ->where('start_time', '>=', $hourStart)
+                        ->where('start_time', '<', $hourEnd);
+                }
+            ])
+            ->get();
+```
+Si se pudiera hacer un paralelismo a un SQL script sería:
+```sql
+SELECT d.*
+FROM doctors d
+JOIN schedules s ON s.doctor_id = d.id
+LEFT JOIN appointments a ON a.doctor_id = d.id
+    AND a.date = '2025-08-01'
+    AND a.start_time >= '09:00:00'
+    AND a.start_time < '10:00:00'
+WHERE s.day_of_week = 5 -- (Ej: si es viernes)
+  AND s.start_time >= '09:00:00'
+  AND s.start_time < '10:00:00'
+  AND (d.speciality_id = 3) -- si se pasa speciality_id
+GROUP BY d.id;
+```
+Si en un ejemplo con `dd` se le hiciera a la consula devolvería algo así:
+```json
+array:1 [▼ // app/Services/AppointmentService.php:46
+  0 => array:12 [▼
+    "id" => 9
+    "user_id" => 9
+    "speciality_id" => 9
+    "medical_license_number" => "MED789345"
+    "biography" => "Dr. Petyr Baelish es un traumatólogo experto en lesiones y enfermedades del sistema musculoesquelético."
+    "is_active" => 1
+    "created_at" => "2025-07-30T20:11:46.000000Z"
+    "updated_at" => "2025-07-30T20:11:46.000000Z"
+    "user" => array:13 [▶]
+    "speciality" => array:5 [▶]
+    "schedules" => array:4 [▼
+      0 => array:6 [▼
+        "id" => 96
+        "doctor_id" => 9
+        "day_of_week" => 5
+        "start_time" => "2025-07-31T12:00:00.000000Z"
+        "created_at" => "2025-07-31T05:40:23.000000Z"
+        "updated_at" => "2025-07-31T05:40:23.000000Z"
+      ]
+      1 => array:6 [▶]
+      2 => array:6 [▶]
+      3 => array:6 [▶]
+    ]
+    "appointments" => []
+  ]
+]
+```
+Devolviendo todos los doctores activos que tienen un horario disponbile ese día y hora, si pertenece opcionalemnte a la especialidad `9` que sería "Traumatología".
 ## C51:
 ## C52:
 ## C53:

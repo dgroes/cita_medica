@@ -47,7 +47,7 @@ class PatientSeeder extends Seeder
             ],
             [
                 //User id: 12 (Oberyn Martell)
-                'user_id' => 11,
+                'user_id' => 12,
                 'blood_type_id' => 2, // Tipo de sangre A-
                 'allergies' => 'Pollen',
                 'chronic_conditions' => null,

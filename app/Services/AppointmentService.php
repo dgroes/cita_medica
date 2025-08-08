@@ -43,6 +43,7 @@ class AppointmentService
                 }
             ])
             ->get();
-        dd($doctors->toArray());
+        // dd($doctors->toArray());
+        return $doctors;
     }
 }

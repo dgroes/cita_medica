@@ -19,7 +19,24 @@ class AppointmentManager extends Component
         'speciality_id' => '',
     ];
 
+    public $selectedSchedules = [
+        'doctor_id' => '',
+        'schedules' => [],
+    ];
+
     public $specialties = [];
+
+    public $availability = [];
+
+    public $appointment = [
+        'patient_id' => '',
+        'doctor_id' => '',
+        'date' => '',
+        'start_time' => '',
+        'end_time' => '',
+        'duration' => '',
+        'reason' => '',
+    ];
 
     public function mount()
     {
@@ -62,8 +79,11 @@ class AppointmentManager extends Component
             ],
         ]);
 
+        $this->appointment['date'] = $this->search['date'];
+
+
         // Buscar Disponibilidad
-        $availability = $service->searchAvailability(...$this->search); #date, hour, speciality_id
+        $this->availability = $service->searchAvailability(...$this->search); #date, hour, speciality_id
 
     }
 

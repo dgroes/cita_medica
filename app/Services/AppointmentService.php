@@ -46,4 +46,6 @@ class AppointmentService
         // dd($doctors->toArray());
         return $doctors;
     }
+
+
 }

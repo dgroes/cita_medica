@@ -1,4 +1,4 @@
-<div>
+<div x-data="data()">
 
     <x-wire-card class="mb-8">
         <p class="text-xl font-semibold mb-1 text-slate-800">
@@ -43,8 +43,8 @@
 
     @if ($appointment['date'])
         @if (count($availability))
-            <div class="grid grid-cols-3 gap-8">
-                <div class="col-span-2">
+            <div class="grid lg:grid-cols-3 gap-4 lg:gap-8">
+                <div class="col-span-1 lg:col-span-2">
 
                     {{-- Mostra doctores si los hay para las fecha y hora --}}
                     @foreach ($availability as $doctor)
@@ -68,10 +68,12 @@
                                 <p class="text-sm text-slate-600 mb-2 font-semibold">
                                     Horarios disponibles
                                 </p>
-                                <ul class="grid grid-cols-4 gap-2">
+                                <ul class="grid grid-col-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
                                     @foreach ($doctor->schedules as $schedule)
                                         <li>
-                                            <x-wire-button class="w-full">
+                                            <x-wire-button
+                                                x-on:click="selectSchedule({{ $doctor->id }}, '{{ $schedule->start_time->format('H:i:s') }}')"
+                                                class="w-full">
                                                 {{ $schedule->start_time->format('H:i:s') }}
                                             </x-wire-button>
                                         </li>
@@ -85,7 +87,7 @@
 
                 </div>
                 <div class="col-span-1">
-
+                    @json($selectedSchedules)
                 </div>
             </div>
         @else
@@ -94,4 +96,18 @@
             </x-wire-card>
         @endif
     @endif
+
+    @push('js')
+        <script>
+            function data() {
+                return {
+                    selectedSchedules: @entangle('selectedSchedules').live,
+                    selectSchedule(doctorId, schedule) {
+                        this.selectedSchedules.doctor_id = doctorId;
+                        this.selectedSchedules.schedules = schedule;
+                    }
+                }
+            }
+        </script>
+    @endpush
 </div>

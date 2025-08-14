@@ -10,7 +10,7 @@ return [
         6 => 'Sábado',
         0 => 'Domingo' //En Carbon el domingo es de 0
     ],
-    'appoiment_duration' => 15,
+    'appointment_duration' => 15,
     'start_time' => '08:00:00',
     'end_time' => '18:00:00'
 ];

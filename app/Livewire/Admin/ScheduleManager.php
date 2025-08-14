@@ -35,7 +35,7 @@ class ScheduleManager extends Component
     public function mount()
     {
         $this->days = config('schedule.days');
-        $this->apointment_duration = config('schedule.appoiment_duration');
+        $this->apointment_duration = config('schedule.appointment_duration');
         $this->start_time = config('schedule.start_time');
         $this->end_time = config('schedule.end_time');
         $this->intervals = 60 / $this->apointment_duration;

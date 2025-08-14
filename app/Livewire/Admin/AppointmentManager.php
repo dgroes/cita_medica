@@ -26,7 +26,7 @@ class AppointmentManager extends Component
 
     public $specialties = [];
 
-    public $availability = [];
+    public $availabilities = [];
 
     public $appointment = [
         'patient_id' => '',
@@ -48,6 +48,14 @@ class AppointmentManager extends Component
             : now()->format('Y-m-d');
     }
 
+    // Escuchar cambios en selectedSchedules
+    public function updated($property, $value)
+    {
+        if ($property === 'selectedSchedules') {
+            $this->fillAppointment($value);
+        }
+    }
+
     //Propiedad computada
     #[Computed()]
     public function hourBlocks()
@@ -57,6 +65,14 @@ class AppointmentManager extends Component
             '1 hour',
             Carbon::createFromTimeString(config('schedule.end_time'))
         )->excludeEndDate(); ## Excluir de las 18:00 hasta las 19:00
+    }
+
+    #[Computed()]
+    public function doctorName()
+    {
+        return $this->appointment['doctor_id']
+            ? $this->availabilities[$this->appointment['doctor_id']]['doctor']->user->name
+            : 'Por definir';
     }
 
     /* C50: Buscador de citas médicas (2) */
@@ -83,8 +99,35 @@ class AppointmentManager extends Component
 
 
         // Buscar Disponibilidad
-        $this->availability = $service->searchAvailability(...$this->search); #date, hour, speciality_id
+        $this->availabilities = $service->searchAvailability(...$this->search); #date, hour, speciality_id
 
+    }
+
+    /* C52: Búsqueda de disponibilidad, selección de horarios y resumen de cita */
+    // Método para llenar los datos de la cita
+    public function fillAppointment($selectedSchedules)
+    {
+        // Ordenar los horarios seleccionados
+        $schedules = collect($selectedSchedules['schedules'])
+            ->sort()
+            ->values();
+
+        // Si hay horarios seleccionados
+        if ($schedules->count()) {
+            $this->appointment['doctor_id'] = $selectedSchedules['doctor_id'];
+            $this->appointment['start_time'] = $schedules->first();
+            $this->appointment['end_time'] = Carbon::parse($schedules->last())->addMinutes(config('schedule.appointment_duration'))->format('H:i:s');
+            $this->appointment['duration'] = $schedules->count() * config('schedule.appointment_duration');
+
+            return;
+        }
+
+        // Si no hay horarios seleccionados
+        $this->appointment['doctor_id'] = "";
+        $this->appointment['doctor_id'] = "";
+        $this->appointment['start_time'] = "";
+        $this->appointment['end_time'] = "";
+        $this->appointment['duration'] = "";
     }
 
     public function render()

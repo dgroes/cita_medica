@@ -989,7 +989,7 @@ Laravel permite que se puedan acceder ahí facilmente. en este caso `config/sche
 ```php
 // app/Livewire/Admin/ScheduleManager.php
 $this->days = config('schedule.days');
-    $this->apointment_duration = config('schedule.appoiment_duration');
+    $this->apointment_duration = config('schedule.appointment_duration');
     $this->start_time = config('schedule.start_time');
     $this->end_time = config('schedule.end_time');
 ```
@@ -1288,11 +1288,171 @@ array:1 [▼ // app/Services/AppointmentService.php:46
 ]
 ```
 Devolviendo todos los doctores activos que tienen un horario disponbile ese día y hora, si pertenece opcionalemnte a la especialidad `9` que sería "Traumatología".
-## C51:
-## C52:
-## C53:
-## C54:
-## C55:
-## C56:
-## C57s:
+## C51: Selección de citas médicas
+Para poder agendar una cita con un doctor, antes deberá el usuario pasar por la sección de "Selección de citas" para seleccionar la fecha, horario y seleccionar un doctor o especialista disponible. Siguiendo con los ficheros:
+- `resources/views/livewire/admin/appointment-manager.blade.php`
+- `app/Livewire/Admin/AppointmentManager.php`
+- `app/Services/AppointmentService.php`
+Está lo siguiente
+### AppointmentManager
+Primero, Dentro del fichero `AppointmentManager` se establecen los siguientes datos:
+```php
+// app/Livewire/Admin/AppointmentManager.php
+
+public $selectedSchedules = [
+        'doctor_id' => '',
+        'schedules' => [],
+    ];
+
+public $availability = [];
+
+public $appointment = [
+    'patient_id' => '',
+    'doctor_id' => '',
+    'date' => '',
+    'start_time' => '',
+    'end_time' => '',
+    'duration' => '',
+    'reason' => '',
+];
+```
+Estos datos serán importante para la seleccion de horarios.
+1. `public $selectedSchedules`
+- `$selectedSchedules`: Su función es guarda las selecciones de horarios que el usuario hace en la vista. `doctor_id` sería el ID del médico que el usuario seleccionó y ``schedules` es la lista de horas especificas que el usuario eligió para ese médico. Esto se relaciona con el `<script>` que está en la view, cuya función es `selectSchedule()`. el cual modifica esta propiedad atraves de `@entangle('selectedSchedules').live`. Lo que significa que Livewire sincroniza el valo entre el front (JS) y el Back (PHP) en tiempo real. Entonces
+    - El usuario ve la horas disponibles `$availabilities`
+    - Clic en una hora -> se actualiza `selectedSchedules`
+    - Este valor se podría usar para confitrmar una cita concreta
+2. `public $availabilities`
+Su función es almacenar el resultado de la búsqueda de disponibilidad que devuelve `AppointmentService::searchAvailability()` Además se relacióna con `AppointmentService`. Aquí en:
+```php
+$this->availabilities = $service->searchAvailability(...$this->search);
+```
+En esta parte se pasan `date`, `hour`, `speciality_id` (contenido de `$this->search`) al servicio, que consulta la base de datos de doctores, sus horarios (`schedules`) y citas `appointments` para ver quién está disponible.
+Su relación con la vista está en el siguiente `foreach`:
+```php
+@foreach ($availabilities as $availability)
+    {{ $availability['doctor']->user->name }}
+    @foreach ($availability['schedules'] as $schedule)
+        {{ $schedule['start_time'] }}
+    @endforeach
+@endforeach
+```
+En la vista blade, se itera sobre `$availabilities`. Esto permite mostrar cada médico y sus horas disponibles.
+3. `public  $appointment`
+Este es el contenedor de datos de la cita que se quiere agendar. Sirve para almacenar temporalmente los datos que luego se guardarán en la BD como un nuevo registro de cita. 
+- Inicialización parcial:
+En `searchAvailability()` se rellena:
+```php
+$this->appointment['date'] = $this->search['date'];
+```
+Esto asegura que, desde le momento de buscar disponibiilidad, ya se guarde la fecha seleccionada para esa futura cita.
+### AppointmentService
+Lo nuevo que se añadió al fichero el método `processResults`. Este método sería un **adaptador de datos**. Recibe los modelos completos y los empaqueta en una estrucutra optimizada y limpia para que Livewire y la vista puedan usarlos sin tener que manipular datos complejos directamente. Aquí el método:
+```php
+// app/Services/AppointmentService.php
+public function searchAvailability($date, $hour, $speciality_id)
+    {
+            return $this->processResults($doctors);
+    }
+    
+public function processResults($doctors)
+    {
+        return $doctors->mapWithKeys(function ($doctor) {
+            return [
+                $doctor->id => [
+                    'doctor' => $doctor,
+                    'schedules' => $doctor->schedules->map(function ($schedule) {
+                        return [
+                            // 'id' => $schedule->id,
+                            'start_time' => $schedule->start_time->format('H:i:s'),
+                            // 'end_time' => $schedule->end_time,
+
+                        ];
+                    })->toArray(),
+                ]
+            ];
+        });
+    }
+```
+Entonces `searchAvailability()` uso sería una consulta de datos crudos. Primero se llama la consulta en Eloquent para traer a los doctores que cumple: 
+- Disponibilidad en el día y hora indicados.
+- (Opcional) Que tengan la especialidad indicada.
+- Con las relaciones necesarias (`user`, `speciality`, `schedules`, `appointments`). 
+Luego en vez de devolver la colección tal cual para al `return`
+```php
+return $this->processResults($doctors);
+```
+aquí se reorganiza y simplifica:
+- Pone el `id` del doctor como clave del array.
+- Agrupa bajo `'doctor'` el modelo completo (para mostrar nombre, foto, especialidad).
+- Crea `'schedules'` con solo las horas de inicio ya formateadas.
+El resultado final sería:
+```json
+[
+    3 => [
+        'doctor' => Doctor{id: 3, ...},
+        'schedules' => [
+            ['start_time' => '09:00:00'],
+            ['start_time' => '10:00:00']
+        ]
+    ],
+    5 => [
+        'doctor' => Doctor{id: 5, ...},
+        'schedules' => [
+            ['start_time' => '11:00:00']
+        ]
+    ]
+]
+```
+Está vinculado con `AppointmentManager`, ya que dicho array se guadaría en:
+```php
+// app/Livewire/Admin/AppointmentManager.php
+$this->availabilities = $service->searchAvailability(...$this->search);
+```
+Luego la vista `appointment-manager.blade.php` lo recorre para pintar:
+- Foto y nombre del doctor (`$availability['doctor']->user->name`).
+- Lista de botones con horas disponibles (`$availability['schedules']`).
+Con todo esto `searchAvailability()` **obtiene los datos crudos** y llama a `processResults()` **que devuelve datos listos para la vista**. Y Livewire no tiene que preocuparse por filtara, formatear o agrupar, porque el servicio ya entrega la información "empaquetada" para pintarla directamente.
+### Appointment-Manager
+En base a estas últimas actualizaciones, primero, al inicio de la view está lo siguiente:
+```html
+<div x-data="data()">
+```
+Esto significa que AlpineJS ejecuta la función `data()` y el objeto que retorna queda vinculado a ese `<div>` como *estado reactivo*.
+Dentro de `data()`:
+```js
+selectedSchedules: @entangle('selectedSchedules').live,
+```
+- `@entangle('selectedSchedules')` es Livewire <-> Alpine bireccional:
+    - Livewire tiene una propiedad pública llamada `$selectedSchedules` en el componente `AppointmentManager`.
+    - AlpineJS la recibe como `selectedSchedules` y cualquier cambio en Alpine actualiza Livewire automáticamente (y viceversa)
+- El `.live` hace que la sincronización sea **inmediata** (sin esperar interacción del usuario como `blur` o `change`).
+### Método `selectSchedule()`
+Este método se ejecuta cuando el usuario hace clic en un horario(`x-on:click="selectSchedule(...)"` en la lista de horarios de cada doctor).
+**Lógica interna:**
+1. Cambio de doctor
+Si el doctor actual (`selectedSchedules.doctor_id`) no coincide con el que está siendo seleccionado, se reinicia la selección para ese nuevo doctor con solo el horario clicado.
+2. Mismo doctor -> toggle del horario
+- Si el horario ya estaba en la lsita, lo quita (`filter`)
+- Si no estaba, lo agrega (`spread operator ...`)
+3. Actualiza `selectedSchedules`
+Esto actualiza tanto alpine como Livewire al mismo tiempo gracias a `@entangle`. Significa que cuando en la vista se hace clic en un botón de horario, se actualiza:
+- Visualmente usando `x-bind:class` para aplicar `opacity-50` si ya estaba seleccionado.
+- En el backend (livewire) porque `@entangle` sincroniza la propiedad sin recargar.
+### Carga de doctores
+El el `if`: `@if (count($availabilities))` se hace uso de `AppointmentManager::searchAvailability()`: en `app/Livewire/Admin/AppointmentManager.php` esta lo siguiente:
+```php
+// app/Livewire/Admin/AppointmentManager.php
+public function searchAvailability(AppointmentService $service)
+{
+    $this->validate([...]);
+
+    $this->appointment['date'] = $this->search['date'];
+
+    $this->availabilities = $service->searchAvailability(...$this->search);
+}
+```
+- `...$this->search` -> destrucura el array `['date', 'hour', 'speciality_id']` y los pasa como parámetros al servicio.
+- El resultado de `$service->searchAvailability()` se guarda en `$this->availabilities`
+
 

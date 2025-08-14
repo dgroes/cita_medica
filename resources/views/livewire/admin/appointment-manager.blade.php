@@ -148,12 +148,24 @@
                         </div>
 
                         <hr class="my-5">
-                        <div class="spacee-y-6">
+                        <div class="space-y-6">
+
                             <x-wire-select label="Paciente" placeholder="Selecciona un paciente" :async-data="route('api.patients.index')"
                                 wire:model="appointment.patient_id" icon="user" option-label="name"
                                 option-value="id" />
-                            <x-wire-textarea wire:model="appointment.reason" />
+                            <x-wire-textarea
+                                wire:model="appointment.reason"
+                                label="Motivo de la cita"
+                                placeholder="Describe el motivo de la cita"
+                                rows="3"
+                                />
 
+                            <x-wire-button
+                                wire:click="save"
+                                spinner="save"
+                                class="w-full">
+                                Confirmar cita
+                            </x-wire-button>
                         </div>
                     </x-wire-card>
                 </div>

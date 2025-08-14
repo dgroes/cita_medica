@@ -2,10 +2,12 @@
 
 namespace App\Livewire\Admin;
 
+use App\Models\Appointment;
 use App\Models\Speciality;
 use App\Services\AppointmentService;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
+use Illuminate\Support\Facades\Redirect;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
@@ -128,6 +130,37 @@ class AppointmentManager extends Component
         $this->appointment['start_time'] = "";
         $this->appointment['end_time'] = "";
         $this->appointment['duration'] = "";
+    }
+
+    public function save()
+    {
+        $this->validate([
+            'appointment.patient_id' => 'required|exists:patients,id',
+            'appointment.doctor_id' => 'required|exists:doctors,id',
+            'appointment.date' => 'required|date|after_or_equal:today',
+            'appointment.start_time' => 'required|date_format:H:i:s',
+            'appointment.end_time' => 'required|date_format:H:i:s|after:appointment.start_time',
+            'appointment.reason' => 'nullable|string|max:255',
+        ]);
+
+        // Guardar la cita
+        Appointment::create($this->appointment);
+
+        session()->flash('swal', [
+            'icon' => 'success',
+            'title' => 'Cita creada exitosamente',
+            'text' => 'La cita ha sido registrada correctamente.',
+            /*  'timer' => 3000,
+            'showConfirmButton' => false, */
+        ]);
+
+        return redirect()->route('admin.appointments.index');
+
+       /*  // Resetear los campos
+        $this->reset('search', 'selectedSchedules', 'availabilities', 'appointment');
+
+        // Emitir evento para actualizar la lista de citas
+        $this->emit('appointmentCreated'); */
     }
 
     public function render()

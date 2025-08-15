@@ -48,7 +48,7 @@ Aquí lo que hace es: cargar las opciones desde la URL `/api/patients` y cuando 
 4.` <x-wire-select>` recibe el JSON y lo pinta en la lista desplegable.
 5. El usuario selecciona un paciente → Livewire actualiza `appointment.patient_id` en el backend en tiempo real.
 6. Ese `patient_id` se usará después para crear o confirmar la cita junto con el doctor, fecha y hora seleccionados.
-## C53: Discriminar fechas repetidas
+## C53: Discriminar horarios disponibles
 Para solo mostrar horarios de citas disponibles `AppointmentService.php` se creó el siguiente método:
 ```php
 // app/Services/AppointmentService.php

@@ -66,6 +66,7 @@ class AppointmentService
     }
 
     //Método para obtener los horarios disponibles
+    // C53: Discriminar horarios disponibles
     public function getAvailableSchedules($schedules, $appointments)
     {
         return $schedules->map(function ($schedule) use ($appointments) {

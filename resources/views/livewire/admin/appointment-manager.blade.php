@@ -73,7 +73,7 @@
                                     @foreach ($availability['schedules'] as $schedule)
                                         <li>
                                             <x-wire-button
-                                                :disabled="$schedule['disabled']"
+                                                :disabled="$schedule['disabled']" {{-- C53: Discriminar horarios disponibles --}}
                                                 x-on:click="selectSchedule({{ $availability['doctor']->id }}, '{{ $schedule['start_time'] }}')"
                                                 x-bind:class="selectedSchedules.doctor_id === {{ $availability['doctor']->id }} &&
                                                     selectedSchedules.schedules.includes(

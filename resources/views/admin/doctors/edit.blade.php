@@ -30,8 +30,8 @@
                     </div>
                 </div>
                 <div class="flex space-x-3 mt-6 lg:mt-0">
-                    <x-wire-button outline gray href="{{ route('admin.doctors.index') }}">
-                        Volver
+                    <x-wire-button outline gray href="{{ route('admin.doctors.schedules', $doctor) }}">
+                        Horarios
                     </x-wire-button>
                     <x-wire-button type="submit">
                         <i class="fa-solid fa-check"></i>
@@ -68,8 +68,7 @@
                     {{ old('biography', $doctor->biography) }}
                 </x-wire-textarea>
 
-                <x-wire-native-select
-                    label="Estado" name="is_active" icon="check-circle">
+                <x-wire-native-select label="Estado" name="is_active" icon="check-circle">
                     <option value="1" @selected(old('is_active', $doctor->is_active) == 1)>
                         Activo
                     </option>

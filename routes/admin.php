@@ -28,8 +28,8 @@ Route::resource('doctors', DoctorController::class)
     ->only(['index', 'edit', 'update']);
 
 //Rute de calendario de Doctores /* C43: Horarios de Doctores */
-Route::get('doctos/{doctor}/schedules', [DoctorController::class, 'schedules'])
-    ->name('doctor.schedule');
+Route::get('doctors/{doctor}/schedules', [DoctorController::class, 'schedules'])
+    ->name('doctors.schedules');
 
 //Ruta para las citas médicas
 Route::get('appointments/{appointment}/consultation', [AppointmentController::class, 'consultation'])

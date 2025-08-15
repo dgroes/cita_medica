@@ -48,7 +48,79 @@ Aquí lo que hace es: cargar las opciones desde la URL `/api/patients` y cuando 
 4.` <x-wire-select>` recibe el JSON y lo pinta en la lista desplegable.
 5. El usuario selecciona un paciente → Livewire actualiza `appointment.patient_id` en el backend en tiempo real.
 6. Ese `patient_id` se usará después para crear o confirmar la cita junto con el doctor, fecha y hora seleccionados.
-## C53:
+## C53: Discriminar fechas repetidas
+Para solo mostrar horarios de citas disponibles `AppointmentService.php` se creó el siguiente método:
+```php
+// app/Services/AppointmentService.php
+public function getAvailableSchedules($schedules, $appointments)
+    {
+        return $schedules->map(function ($schedule) use ($appointments) {
+
+            $isBooked = $appointments->some(function ($appointment) use ($schedule) {
+                $appointmentPeriod = CarbonPeriod::create(
+                    $appointment->start_time,
+                    config('schedule.appointment_duration') . ' minutes',
+                    $appointment->end_time
+                )->excludeEndDate();
+
+                return $appointmentPeriod->contains($schedule->start_time);
+            });
+
+            return [
+                'start_time' => $schedule->start_time->format('H:i:s'),
+                'disabled' => $isBooked,
+            ];
+        });
+    }
+```
+Este método determina si cada horario está copudado o no, recibiendo como parametro:
+- `$schedules`: Los horarios que el doctor puede trabajar según su agenda
+- `$appointments`: citas ya reservadas en esos horarios.
+En la sección:
+```php
+$isBooked = $appointments->some(function ($appointment) use ($schedule) {
+    ...
+}
+```
+- Para cada cita existente (`$appointment`), genera un rango de tiempo (`CarbonPeriod`) desde `start_time` hasta `end_time` en intervalos de duración de cita (`appointment_duration` en `config`, osea 15 mintuos)
+- verifica si el horario del `schedule` está dentro de ese rango.
+- Si `$isBooked = true` (ocupado).
+El arreglo devolvería un arreglo similar a esto:
+```json
+[
+    'start_time' => '10:00:00',
+    'disabled' => true // si está reservado
+]
+```
+Además para que este método funcione en `processResults` se hace el llamado para la filtración de los datos:
+```php
+// app/Services/AppointmentService.php
+{
+
+            $schedules = $this->getAvailableSchedules($doctor->schedules, $doctor->appointments);
+
+            return $schedules->contains('disabled', false) ?
+                [
+                    $doctor->id => [
+                        'doctor' => $doctor,
+                        'schedules' => $schedules,
+                    ]
+                ] : [];
+        });
+```
+- Aquí solo  se incluye al doctor en `$availabilities` si al menos uno de sus horarios tiene `'disabled' => false`.
+- Si todos los horarios están ocupados, ese doctor ni siquiera aparecería en la vista.
+Para que todo esto esté reflejado en la view, se hace una modificación aquí:
+```php
+// resources/views/livewire/admin/appointment-manager.blade.php
+@foreach ($availability['schedules'] as $schedule)
+                                        <li>
+                                            <x-wire-button
+                                                :disabled="$schedule['disabled']"
+```
+- Si `'disabled' => true`, el botón estará inactivo (no clickable)
+- Esto evita que el usuario seleccione horas ya reservadas.
+- Los horarios libres (`disable = false`) quedan habilitados y se pueden seleccionar.
 ## C54:
 ## C55:
 ## C56:

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Doctor;
 use Carbon\Carbon;
+use Carbon\CarbonPeriod;
 
 class AppointmentService
 {
@@ -45,24 +46,43 @@ class AppointmentService
             ->get();
         // dd($doctors->toArray());
         return $this->processResults($doctors);
-
     }
 
     public function processResults($doctors)
     {
         return $doctors->mapWithKeys(function ($doctor) {
-            return [
-                $doctor->id => [
-                    'doctor' => $doctor,
-                    'schedules' => $doctor->schedules->map(function ($schedule) {
-                        return [
-                            // 'id' => $schedule->id,
-                            'start_time' => $schedule->start_time->format('H:i:s'),
-                            // 'end_time' => $schedule->end_time,
 
-                        ];
-                    })->toArray(),
-                ]
+            $schedules = $this->getAvailableSchedules($doctor->schedules, $doctor->appointments);
+
+            // Filtrar horarios deshabilitados
+            return $schedules->contains('disabled', false) ?
+                [
+                    $doctor->id => [
+                        'doctor' => $doctor,
+                        'schedules' => $schedules,
+                    ]
+                ] : [];
+        });
+    }
+
+    //Método para obtener los horarios disponibles
+    public function getAvailableSchedules($schedules, $appointments)
+    {
+        return $schedules->map(function ($schedule) use ($appointments) {
+
+            $isBooked = $appointments->some(function ($appointment) use ($schedule) {
+                $appointmentPeriod = CarbonPeriod::create(
+                    $appointment->start_time,
+                    config('schedule.appointment_duration') . ' minutes',
+                    $appointment->end_time
+                )->excludeEndDate();
+
+                return $appointmentPeriod->contains($schedule->start_time);
+            });
+
+            return [
+                'start_time' => $schedule->start_time->format('H:i:s'),
+                'disabled' => $isBooked,
             ];
         });
     }

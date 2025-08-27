@@ -247,6 +247,15 @@ Lo que pasa aquí es:
 - Si `$appointmentEdit` **es null** significa que es una nueva cita.
     - se hace un `Appointment::create(...)`
     - Se redirige al listado de citas.
-## C55:
+## C55: Consultation
+Se crea el model y migration de **Consultation**:
+```bash
+❯ php artisan make:model Consultation -m
+
+   INFO  Model [app/Models/Consultation.php] created successfully.  
+
+   INFO  Migration [database/migrations/2025_08_26_212314_create_consultations_table.php] created successfully.  
+```
+Añadiendo los campos correspondientes a la migración. Luego sería el agregado de las relaciónes en el modelo. Dentro del modelo estará el casteo de `prescription` que será tipo `json`.
 ## C56:
 ## C57:

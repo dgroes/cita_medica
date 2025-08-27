@@ -15,6 +15,8 @@ use Livewire\Component;
 class AppointmentManager extends Component
 {
 
+    public ?Appointment $appointmentEdit = null;
+
     public $search = [
         'date' => '',
         'hour' => '',
@@ -48,6 +50,10 @@ class AppointmentManager extends Component
         $this->search['date'] = now()->hour >= 12
             ? now()->addDay()->format('Y-m-d')
             : now()->format('Y-m-d');
+
+        if ($this->appointmentEdit) {
+            $this->appointment['patient_id'] = $this->appointmentEdit->patient_id;
+        }
     }
 
     // Escuchar cambios en selectedSchedules
@@ -143,6 +149,22 @@ class AppointmentManager extends Component
             'appointment.reason' => 'nullable|string|max:255',
         ]);
 
+        if($this->appointmentEdit)
+        {
+            $this->appointmentEdit->update($this->appointment);
+
+            $this->dispatch('swal', [
+                'icon' => 'success',
+                'title' => 'Cita actualizada correctamente',
+                'text' => 'La cita ha sido actualizada exitosamente.',
+            ]);
+
+            $this->searchAvailability(new AppointmentService());
+
+            return;
+        }
+
+
         // Guardar la cita
         Appointment::create($this->appointment);
 
@@ -156,7 +178,7 @@ class AppointmentManager extends Component
 
         return redirect()->route('admin.appointments.index');
 
-       /*  // Resetear los campos
+        /*  // Resetear los campos
         $this->reset('search', 'selectedSchedules', 'availabilities', 'appointment');
 
         // Emitir evento para actualizar la lista de citas

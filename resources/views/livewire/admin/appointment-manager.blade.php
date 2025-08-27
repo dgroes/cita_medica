@@ -74,6 +74,7 @@
                                         <li>
                                             <x-wire-button
                                                 :disabled="$schedule['disabled']" {{-- C53: Discriminar horarios disponibles --}}
+                                                :color="$schedule['disabled'] ? 'secondary' : 'primary'"
                                                 x-on:click="selectSchedule({{ $availability['doctor']->id }}, '{{ $schedule['start_time'] }}')"
                                                 x-bind:class="selectedSchedules.doctor_id === {{ $availability['doctor']->id }} &&
                                                     selectedSchedules.schedules.includes(
@@ -152,7 +153,7 @@
                         <div class="space-y-6">
 
                             <x-wire-select label="Paciente" placeholder="Selecciona un paciente" :async-data="route('api.patients.index')"
-                                wire:model="appointment.patient_id" icon="user" option-label="name"
+                                wire:model="appointment.patient_id" icon="user" option-label="name" :disabled="isset($appointmentEdit)"
                                 option-value="id" />
                             <x-wire-textarea
                                 wire:model="appointment.reason"

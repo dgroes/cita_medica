@@ -45,7 +45,7 @@ class AppointmentController extends Controller
      */
     public function edit(Appointment $appointment)
     {
-        return view('admin.appointments.edit');
+        return view('admin.appointments.edit', compact('appointment'));
     }
 
     /**

@@ -121,7 +121,132 @@ Para que todo esto esté reflejado en la view, se hace una modificación aquí:
 - Si `'disabled' => true`, el botón estará inactivo (no clickable)
 - Esto evita que el usuario seleccione horas ya reservadas.
 - Los horarios libres (`disable = false`) quedan habilitados y se pueden seleccionar.
-## C54:
+## C54: Edición de una cita
+En el caso de que se quiera cambiar el horario, día o doctor de una cita se añadiría lo siguiente:
+Primero se modificará el enum de Appointment:
+### Estatus de la cita y con color
+```php
+// app/Enums/AppointmentEnum.php
+public function label(): string
+    {
+        return match ($this) {
+            self::SCHEDULED => 'Programada',
+            self::COMPLETED => 'Completada',
+            self::CANCELLED => 'Cancelada',
+        };
+    }
+
+    public function color(): string
+    {
+        return match ($this) {
+            self::SCHEDULED => 'blue',
+            self::COMPLETED => 'green',
+            self::CANCELLED => 'red',
+        };
+    }
+```
+Aquí se agrega el método `label` que devuleve un ``string``, aquí lo que se hace es transformar su nombre en mayusculas e ingles a español, entonces ahora dentro del fichero `appointments/edit.blade.php` está lo siguiente:
+```php
+// resources/views/admin/appointments/edit.blade.php
+<div>
+    <x-wire-badge
+        flat
+        :color="$appointment->status->color()"
+        :label="$appointment->status->label()" />
+</div>
+```
+aquí utilizando un [badge](https://wireui.dev/components/badge) de WireUI se adaptará el color utilizando dichos colores disponibles de WireUI.
+### Editar cita
+Para poder editar la cita previamente agendada:
+```php
+// app/Livewire/Admin/AppointmentManager.php
+public ?Appointment $appointmentEdit = null;
+
+ public function mount()
+    {
+        if ($this->appointmentEdit) {
+                    $this->appointment['patient_id'] = $this->appointmentEdit->patient_id;
+                }
+    }
+
+public function save()
+    {
+        if($this->appointmentEdit)
+            {
+                $this->appointmentEdit->update($this->appointment);
+
+                $this->dispatch('swal', [
+                    'icon' => 'success',
+                    'title' => 'Cita actualizada correctamente',
+                    'text' => 'La cita ha sido actualizada exitosamente.',
+                ]);
+
+                $this->searchAvailability(new AppointmentService());
+
+                return;
+        }
+    }
+```
+Aquí al editar utilizando el método `save` lo que hará es luego de validar los datos pasar por un `if`. Primero, `public ?Appointment $appointmentEdit = null;` es una proieadad publica del componente, el signo `?` significa que puede ser un objeto de tipo `Appointment` o `null`, por defecto se inicializa en `null`.
+Eso es clave para lo que se busca lograr, sirve para:
+- **Crear una nueva cita** -> `$appointmentEdit` recibe una instancia de `Appointment`
+- **Editar una cita existente** ->  `$appointmentEdit` recibe una instancia de `Appointment`.
+Luego lo añadido en el método `mount()`, si `$appointment` **viene con datos (modo edición)**: inicializa el formulario (`$this->appointment`) con los datos de la cita que se está editando (en este caso el `patient_id`).
+
+El `if` del método `save()`, es decir:
+```php
+public function mount()
+{
+    $this->specialties = Speciality::all();
+
+    $this->search['date'] = now()->hour >= 12
+        ? now()->addDay()->format('Y-m-d')
+        : now()->format('Y-m-d');
+
+    if ($this->appointmentEdit) {
+        $this->appointment['patient_id'] $this->appointmentEdit->patient_id;
+    }
+}
+```
+- aquí lo que pasa en el método es siempre cargar las especialidades y setea la fecha por defecto.
+- Si `$appointmentEdit` viene con datos (modo edición): inicializa el formulario (`$this->appointment`) con los datos de la cita que se está editando.
+### Guardar una cita
+En:
+```php
+public function save()
+{
+    $this->validate([...]);
+
+    if($this->appointmentEdit)
+    {
+        $this->appointmentEdit->update($this->appointment);
+
+        $this->dispatch('swal', [
+            'icon' => 'success',
+            'title' => 'Cita actualizada correctamente',
+            'text' => 'La cita ha sido actualizada exitosamente.',
+        ]);
+
+        $this->searchAvailability(new AppointmentService());
+
+        return;
+    }
+
+    Appointment::create($this->appointment);
+
+    session()->flash('swal', [...]);
+
+    return redirect()->route('admin.appointments.index');
+}
+```
+Lo que pasa aquí es:
+- Si `$appointmentEdit` **no es null** significa que se está editando una cita.
+    - Entonces se hace un `$this->appointment->update($this->appointment)`
+    - se muestra un SweetAlert de éxito
+    - Se vuelve a buscar disponibilidad para refrescar la info
+- Si `$appointmentEdit` **es null** significa que es una nueva cita.
+    - se hace un `Appointment::create(...)`
+    - Se redirige al listado de citas.
 ## C55:
 ## C56:
 ## C57:

@@ -34,4 +34,10 @@ class Appointment extends Model
     {
         return $this->belongsTo(Doctor::class);
     }
+
+    // C55: Consultation
+    // --> Una consulta por cita / Relación uno a uno
+    public function consultation(){
+        return $this->hasOne(Consultation::class);
+    }
 }

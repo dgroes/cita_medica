@@ -2,7 +2,7 @@
     <x-wire-button href="{{ route('admin.doctors.edit', $doctor) }}" yellow xs>
         <i class="fa-solid fa-pen-to-square"></i>
     </x-wire-button>
-    <x-wire-button href="{{ route('admin.doctor.schedule', $doctor) }}" green xs>
+    <x-wire-button href="{{ route('admin.doctors.schedules', $doctor) }}" green xs>
         <i class="fa-solid fa-calendar"></i>
     </x-wire-button>
 </div>

@@ -166,7 +166,10 @@ class AppointmentManager extends Component
 
 
         // Guardar la cita
-        Appointment::create($this->appointment);
+        Appointment::create($this->appointment)
+            ->consultation()
+            ->create([]);
+
 
         session()->flash('swal', [
             'icon' => 'success',

@@ -16,7 +16,7 @@
                 </div>
             </div>
             <div class="flex space-x-3 mt-6 lg:mt-0">
-                <x-wire-button outline gray>
+                <x-wire-button outline gray x-on:click="$openModal('historyModal')">
                     <i class="fa-solid fa-notes-medical"></i>
                     Ver hisorial
                 </x-wire-button>
@@ -136,4 +136,66 @@
         </div>
 
     </x-wire-card>
+
+    {{-- Modal de historial médico del paciente --}}
+    <x-wire-modal-card title="Historia médica del paciente" name="historyModal" width="5xl">
+        <div class="grid grid-cols-4 gap-6">
+
+            {{-- Tipo de sangre del paciente --}}
+            <div>
+                <p class="font-medium text-gray-500 mb-1">
+                    Tipo de sangre:
+                </p>
+
+                <p class="font-semibold text-gray-800">
+                    {{ $patient->bloodType?->name ?? 'No registrado' }}
+                </p>
+            </div>
+
+            {{-- Alergias del paciente --}}
+            <div>
+                <p class="font-medium text-gray-500 mb-1">
+                    Alergias:
+                </p>
+
+                <p class="font-semibold text-gray-800">
+                    {{ $patient->allergies ?? 'No registrado' }}
+                </p>
+            </div>
+
+            {{-- Enfermedades crónicas del paciente --}}
+            <div>
+                <p class="font-medium text-gray-500 mb-1">
+                    Enfermedades crónicas:
+                </p>
+
+                <p class="font-semibold text-gray-800">
+                    {{ $patient->chronic_conditions ?? 'No registrado' }}
+                </p>
+            </div>
+
+            {{-- Antecendentes quirúrgicos del paciente --}}
+            <div>
+                <p class="font-medium text-gray-500 mb-1">
+                    Antecedentes quirúrgicos:
+                </p>
+
+                <p class="font-semibold text-gray-800">
+                    {{ $patient->surgical_history ?? 'No registrado' }}
+                </p>
+            </div>
+
+        </div>
+
+        <x-slot name="footer">
+            <div class="flex justify-end">
+                <a href="{{route('admin.patients.edit', $patient->id)}}"
+                    class="font-semibold text-blue-600 hover:text-blue-800"
+                    target="_blank">
+                    Ver / Editar Historia Médica
+                </a>
+            </div>
+        </x-slot>
+
+    </x-wire-modal-card>
 </div>

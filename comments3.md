@@ -257,5 +257,140 @@ Se crea el model y migration de **Consultation**:
    INFO  Migration [database/migrations/2025_08_26_212314_create_consultations_table.php] created successfully.  
 ```
 Añadiendo los campos correspondientes a la migración. Luego sería el agregado de las relaciónes en el modelo. Dentro del modelo estará el casteo de `prescription` que será tipo `json`.
-## C56:
-## C57:
+Ahora, consultatión serán las consultas de una cita, entonces además de la relación entre modelos que debe haber, además dentro de `AppointmentManager.php` se añadirá esto:
+```php
+Appointment::create($this->appointment)
+            ->consultation()
+            ->create([]);
+```
+haciendo que al crear la cita, se cree además una consulta.
+## C56: Consultation(2)
+### Lo principal
+Siguiendo con las consulta médica que se realizo en base a una cita médica, está la nueva view: `resources/views/admin/appointments/consultation.blade.php`. Además de su método en el controller de Appointment:
+```php
+// app/Http/Controllers/Admin/AppointmentController.php
+public function consultation(Appointment $appointment){
+        return view('admin.appointments.consultation', compact('appointment'));
+    }
+``` 
+Luego está un componente de Livewire para las consultas:
+```bash
+❯ php artisan make:livewire Admin/ConsultationManager
+ COMPONENT CREATED  🤙
+
+CLASS: app/Livewire/Admin/ConsultationManager.php
+VIEW:  resources/views/livewire/admin/consultation-manager.blade.php
+```
+Creando así la clase y su componente. Luego dicho componente se llamaría al fichero `consultation.blade.php`en un inicio veindose así:
+```php
+// resources/views/admin/appointments/consultation.blade.php
+<x-admin-layout title="Citas | CitasMédicas" :breadcrumbs="[
+    [
+        'name' => 'Dashboard',
+        'href' => route('admin.dashboard'),
+    ],
+    [
+        'name' => 'Citas',
+        'href' => route('admin.appointments.index'),
+    ],
+    [
+        'name' => 'Consulta',
+    ],
+]">
+
+    @livewire('admin.consultation-manager', ['appointment' => $appointment])
+
+</x-admin-layout>
+s
+```
+### El componente Livewire
+Luego de crear los el componente Livewire estará el fichero `admin/consultation-manager.blade.php` el cual será similar `card` realizada en `admin/patients/edit.blade.php`. En un inicio el fichero sería:
+```php
+// resources/views/livewire/admin/consultation-manager.blade.php
+<div>
+    <x-wire-card class="mb-2">
+        <div class="lg:flex lg:justify-between lg:items-center">
+            <div class="flex items-center space-x-5">
+                <img src="{{ $appointment->patient->user->profile_photo_url }}" alt="{{ $appointment->patient->user->name }}">
+                // AQUÍ IRÍA EL RESTO DE CÓDIGO...
+        </div>
+    </x-wire-card>
+</div>
+```
+Aquí se puede ver el cambio a diferencía del fichero de edición de patients, se le agregaría primero `$appointment`, el cual lo sacaría del fichero `appointments/consultation.blade.php`:
+```php
+// resources/views/admin/appointments/consultation.blade.php
+<x-admin-layout title="Citas | CitasMédicas">
+
+    @livewire('admin.consultation-manager', ['appointment' => $appointment])
+
+</x-admin-layout>
+```
+Esa varíable con el contenido de la consulta pasaría por esa view, pero se consigue en un inicio en el controller de Appointment:
+```php
+// app/Http/Controllers/Admin/AppointmentController.php
+public function consultation(Appointment $appointment){
+        return view('admin.appointments.consultation', compact('appointment'));
+    }
+```
+Y en la vista `consultation-manager` si realizara un `dd()` sacaría esto:
+```json
+App\Models\Appointment {#2910 ▼ // resources/views/livewire/admin/consultation-manager.blade.php
+  #connection: "mysql"
+  #table: "appointments"
+  #primaryKey: "id"
+  #keyType: "int"
+  +incrementing: true
+  #with: []
+  #withCount: []
+  +preventsLazyLoading: false
+  #perPage: 15
+  +exists: true
+  +wasRecentlyCreated: false
+  #escapeWhenCastingToString: false
+  #attributes: array:11 [▼
+    "id" => 1
+    "patient_id" => 8
+    "doctor_id" => 1
+    "date" => "2025-08-28"
+    "start_time" => "08:00:00"
+    "end_time" => "08:15:00"
+    "duration" => 15
+    "reason" => "Dolor en el cuello, ocasionando la percepción de que le falta su cabeza   "
+    "status" => 1
+    "created_at" => "2025-08-26 21:44:50"
+    "updated_at" => "2025-08-26 21:44:50"
+  ]
+//  ... <-Aquí más datos
+}
+```
+Sacando todos los datos importantes de la consulta médica del paciente
+### El controlador del componente:
+Dentro del fichero `ConsultationManager.php` estaría el manejo general de una consulta, el guardado de la consulta, la actualización de los datos de carga, entre otras cosas.
+## C57: Spinner de carga
+Al añadir un nuevo medicamento en el formulario de "Consulta" en la `tab` de "Receta", están los campos para registrar un medicamentos y el botón de "Añadir Medicamento". Dicho botón tiene estas propiedades:
+```php
+// resources/views/livewire/admin/consultation-manager.blade.php
+<div class="mt-4">
+    <x-wire-button outline secondary
+        wire:click="addPrescription"
+        spinner="addPrescription">
+        <i class="fa-solid fa-plus mr-2"></i>
+        Añadir medicamento
+    </x-wire-button>
+</div>
+```
+Con `wire:click` se activa el método `addPrescription()` el cual está vinculado con `ConsultationManager.php`. En este caso dicho método sería:
+```php
+// app/Livewire/Admin/ConsultationManager.php
+public function addPrescription()
+    {
+        $this->form['prescriptions'][] = [
+            'medicine' => '',
+            'dosage' => '',
+            'frequency' => '',
+        ];
+    }
+```
+Etonces además de agregar un nuevo formulario de `prescriptions` en formato de un nuevo array, con spinner se le agrega dinamismo. Con Alpine hay en ocaciones pequeños retrasos en la carga dinamica de algunos componentes. **con `spinner` dentro de un `x-button` de WireUI se añade un spinner de carga antes de que se carge el nuevo elemento en el DOM.**. En este caso se hace el `spinner` cuando se accede al método `addPrescription` del controller de consultas.
+## C58:

@@ -15,6 +15,7 @@ class ConsultationManager extends Component
     public Consultation $consultation;
     public Patient $patient;
 
+
     public $previousConsultations;
 
     // Aquí irá el contendido de la consulta
@@ -42,6 +43,15 @@ class ConsultationManager extends Component
                 ]
             ]
         ];
+
+        $this->previousConsultations = Consultation::whereHas('appointment', function ($query) {
+            $query->where('patient_id', $this->patient->id);
+        })
+            ->where('id', '!=', $this->consultation->id)
+            ->where('created_at', '<', $this->consultation->created_at)
+            ->latest()
+            ->take(5)
+            ->get();
     }
 
     //Mëtodo para añadir un nuevo medicamento

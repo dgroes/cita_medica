@@ -1,37 +1,36 @@
 <div>
     {{-- C56: Consultation(2) --}}
-    <x-wire-card class="mb-2">
-        <div class="lg:flex lg:justify-between lg:items-center">
-            <div class="flex items-center space-x-5">
-                <img src="{{ $appointment->patient->user->profile_photo_url }}"
-                    alt="{{ $appointment->patient->user->name }}" class="size-20 rounded-full object-cover object-center">
-                <div>
-                    <p class="text-2xl font-bold text-gray-900 mb-1">
-                        {{ $appointment->patient->user->name }}
-                    </p>
+    {{-- información del paciente --}}
+    <div class="lg:flex lg:justify-between lg:items-center mb-4">
 
-                    <p class="text-sm font-semibold text-gray-500">
-                        RUN: {{ $appointment->patient->user->dni ?? 'Sin RUN' }}
-                    </p>
-                </div>
-            </div>
-            <div class="flex space-x-3 mt-6 lg:mt-0">
-                <x-wire-button outline gray x-on:click="$openModal('historyModal')">
-                    <i class="fa-solid fa-notes-medical"></i>
-                    Ver hisorial
-                </x-wire-button>
-                <x-wire-button outline gray>
-                    <i class="fa-solid fa-clock-rotate-left"></i>
-                    Consultas anteriores
-                </x-wire-button>
-            </div>
+        {{-- Nombre y DNI del paciente --}}
+        <div>
+            <p class="text-2xl font-bold text-gray-900 mb-1">
+                {{ $appointment->patient->user->name }}
+            </p>
 
+            <p class="text-sm font-semibold text-gray-500">
+                RUN: {{ $appointment->patient->user->dni ?? 'N/A' }}
+            </p>
         </div>
-    </x-wire-card>
 
-    {{-- Tabs --}}
+        {{-- Botones de Historial medico y consultas anteriores --}}
+        <div class="lg:flex lg:space-x-3 space-y-2 lg:space-y-0 mt-4 lg:mt-0">
+            <x-wire-button class="w-full lg:w-auto" outline gray sm x-on:click="$openModal('historyModal')">
+                <i class="fa-solid fa-notes-medical"></i>
+                Ver Historia
+            </x-wire-button>
+
+            <x-wire-button class="w-full lg:w-auto" outline gray sm x-on:click="$openModal('previousConsultationsModal')">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+                Consultas Anteriores
+            </x-wire-button>
+        </div>
+    </div>
+
+    {{-- Tabs: Consulta méidca y Recetas médicas --}}
     <x-wire-card>
-        <x-tabs active="consultation">
+        <x-tabs active="prescriptions">
 
             {{-- Pestaña de navegación --}}
             <x-slot name="header">
@@ -74,7 +73,7 @@
             <x-tab-content tab="prescriptions">
                 <div class="space-y-4">
                     @forelse ($form['prescriptions'] as $index => $prescription)
-                        <div class="bg-gray-50 p-4 rounded-lg border flex gap-4"
+                        <div class="bg-gray-50 p-4 rounded-lg border lg:flex gap-4 space-y-4 lg:space-y-0"
                             wire:key="prescription-{{ $index }}">
 
                             {{-- Medicamento --}}
@@ -84,7 +83,7 @@
                             </div>
 
                             {{-- Dosis --}}
-                            <div class="w-32">
+                            <div class="lg:w-32">
                                 <x-wire-input label="Dosis" placeholder="Ej: 1/4 pastilla"
                                     wire:model="form.prescriptions.{{ $index }}.dosage" />
                             </div>
@@ -97,7 +96,7 @@
 
                             {{-- Botón para eliminar la prescripción --}}
                             {{-- C57: Spinner de carga --}}
-                            <div class="flex-shrink-0 pt-7">
+                            <div class="flex-shrink-0 lg:pt-7">
                                 <x-wire-mini-button sm red icon="trash"
                                     wire:click="removePrescription({{ $index }})"
                                     spinner="removePrescription({{ $index }})" />
@@ -139,7 +138,7 @@
 
     {{-- Modal de historial médico del paciente --}}
     <x-wire-modal-card title="Historia médica del paciente" name="historyModal" width="5xl">
-        <div class="grid grid-cols-4 gap-6">
+        <div class="grid lg:grid-cols-4 gap-6">
 
             {{-- Tipo de sangre del paciente --}}
             <div>
@@ -189,11 +188,64 @@
 
         <x-slot name="footer">
             <div class="flex justify-end">
-                <a href="{{route('admin.patients.edit', $patient->id)}}"
-                    class="font-semibold text-blue-600 hover:text-blue-800"
-                    target="_blank">
+                <a href="{{ route('admin.patients.edit', $patient->id) }}"
+                    class="font-semibold text-blue-600 hover:text-blue-800" target="_blank">
                     Ver / Editar Historia Médica
                 </a>
+            </div>
+        </x-slot>
+
+    </x-wire-modal-card>
+
+    {{-- Modal de consultas anteriores del paciente --}}
+    <x-wire-modal-card title="Consultas anteriores" name="previousConsultationsModal" width="4xl">
+        @forelse ($previousConsultations as $consultation)
+            <a href="{{ route('admin.appointments.show', $consultation->appointment_id) }}"
+                class="block p-5 rounded-lg shadow-md border-gray-200 hover:border-indigo-400 hover:shadow-indigo-100 transition-all duration-200"
+                target="_blank">
+
+                <div class="lg:flex justify-between items-center space-y-2 lg:space-y-0">
+
+                    <div>
+                        <p class="font-semibold text-gray-800 flex items-center">
+                            <i class="fa-solid fa-calendar-days text-gray-500 mr-2"></i>
+                            {{ $consultation->appointment->date->format('d/m/Y H:i') }}
+                        </p>
+
+                        <p>
+                            Atendido por:
+                            Dr(a). {{ $consultation->appointment->doctor->user->name }}
+                        </p>
+                    </div>
+
+                    <div>
+                        <x-wire-button class="w-full lg:w-auto">
+                            VER DETALLE
+                        </x-wire-button>
+                    </div>
+
+                </div>
+
+            </a>
+
+        @empty
+
+            <div class="text-center py-10 rounded-xl border border-dashed">
+                <i class="fa-solid fa-inbox text-4xl text-gray-300"></i>
+
+                <p class="mt-4 text-sm font-medium text-gray-500">
+                    No se encontraron consultas anteriores para este paciente.
+                </p>
+
+            </div>
+        @endforelse
+
+        {{-- Botón para cerrar el modal --}}
+        <x-slot name="footer">
+            <div class="flex justify-end">
+                <x-wire-button outline gray sm x-on:click="$closeModal('previousConsultationsModal')">
+                    Cerrar
+                </x-wire-button>
             </div>
         </x-slot>
 

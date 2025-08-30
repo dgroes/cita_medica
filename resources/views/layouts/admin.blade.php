@@ -75,7 +75,7 @@
     {{-- C46: Alerta de SweetAlert2 con Livewire --}}
     <script>
         Livewire.on('swal', (data) => {
-            Swal.fire(data)
+            Swal.fire(data[0]) // data[0] contiene las opciones de SweetAlert2
         })
     </script>
 

@@ -13,11 +13,11 @@ class Consultation extends Model
         'diagnosis',
         'treatment',
         'notes',
-        'prescription',
+        'prescriptions',
     ];
 
     protected $casts = [
-        'prescription' => 'json',
+        'prescriptions' => 'json',
     ];
 
     //Relación inversa con Appointment

@@ -26,6 +26,15 @@ enum AppointmentEnum: int
         };
     }
 
+    public function colorHex(): string
+    {
+        return match ($this) {
+            self::SCHEDULED => '#3490dc', // Azul
+            self::COMPLETED => '#38c172', // Verde
+            self::CANCELLED => '#e3342f', // Rojo
+        };
+    }
+
     //Método para verificar si una cita es editable
     public function isEditable(): bool
     {

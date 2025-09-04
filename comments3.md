@@ -430,4 +430,247 @@ public function mount($namePatient = null): void
 }
 ```
 Con esto, cuando se carge la tabla, el input de búsqueda ya tendrá escrito el nombre `"Eddard Stark"` y la tabla estará filtrada automáticamente.
+## C59: Calendario
+### Inicio
+Para la creación, primero se crea el controller:
+```bash
+❯ php artisan make:controller Admin/CalendarController
+INFO  Controller [app/Http/Controllers/Admin/CalendarController.php] created successfully.  
+```
+Dentro del controller deberá estar los métodos:
+```php
+public function index(){
+        return view('admin.calendar.index');
+    }
+```
+Lo siguiente sería crear la ruta para el calendario:
+```php
+// routes/admin.php
+Route::get('caledar', [CalendarController::class, 'index'])->name('calendar.index');
+```
+Luego falta agregar en el sidebar su respectiva ruta.
+### FullCalendar
+Para poder trabajar de manera más facil con un calendario se optó por el uso de [FullCalendar](https://fullcalendar.io/). **FullCalendar** es una biblioteca JS que permite crear calendarios interactivos y dinámicos para mostrar eventos en sitios web y aplicaciones. Proporcionando una interfaz intuitiva para agendar, editar y ver eventos en diferentes formatos.
+FullCalendar se puede descargar de manera manual, utilizar un CDN o se puede instalar con NPM.
+Dentro de `calendar/index.blade.php` está lo siguiente:
+```php
+// resources/views/admin/calendar/index.blade.php
+<div x-data="data()">
+        <div x-ref='calendar'></div>
+</div>
 
+@push('js')
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.19/index.global.min.js'></script>
+
+    <script>
+        function data() {
+            return {};
+        }
+    </script>
+@endpush
+```
+- `x-data="data()`
+    - Alpine.js necesita un objeto para inicializar un *componente reactivo*
+    - `x-data` recibe un objeto o una función que retorna un objeto.
+    - En este caso:
+    - ```php
+        function data() {
+            return {};
+        }
+        ```
+    - Esto quiere decir que el componente Alpine se inicializa con un estado vacío (**por ahora**)
+    - Ese `div` padre ya es un componente Alpine, pero sin propiedades ni métodos definidos.
+- `x-ref="calendar`
+    - `x-ref`sir como una referencia interna dentro del componente Alpine
+    - Es como un `id` pero solo accesible desde Alpine
+    - Desde dentro del componente se puede acceder a ese elemento con `this.$refs.calendar`
+    - En este caso, ese `div x-ref="calendar"` será el contenedor donde se monta el calendario de FullCalendar.
+Dentro de `init`:
+```js
+function data() {
+    return {
+        init() {}
+        }
+    }
+```
+Estará la configuración del calendario, como lo son las traducciones, que tipo de visualización de fechas mostrar, las horas a manejar, etc. Al ser un `init()` esto cargará automaticamente cuando se llame a la función  `data()`. 
+### Creación de eventos (API)
+Hora sigue la creación de una API, dentro de `routes/api.php` estará lo siguiente:
+```php
+// routes/api.php
+Route::get('/appointments', function (Request $request) {})->name('api.appointments.index');
+```
+Aquí además se define su nombre: `api.appointments.index`. Entonces para llamar a dicha API desde el FullCalendar que está en `admin/calendar/index.blade.php`. Dentro del `init()` debería estar su llamado, así:
+```js
+function data() {
+    return {
+        init() {
+            events: {
+                    url: '{{ route('api.appointments.index') }}',
+                    failure: function() {
+                        alert('Error al cargar las citas');
+                        console.warn('Error al cargar los eventos');
+                    },
+                },
+        }
+        }
+    }
+```
+De momento el `events` estaría así. En `url` se especifica el nombre de la ruta a llamar, aquí sería la ruta creada en `routes/`, en este caso: `routes/api.php`, pero al crear la ruta con un alías, se usaraá ese alías para llamarlo, es decir: `api.appointments.index`.
+Seguido de esto estaría una alerta al cargar la página tanto para el usuario como para un dev en la consula de comandos del navegador.
+Que debería devolver la ruta?. Dentro de la ruta podría estar lo siguiente:
+```php
+// routes/api.php
+$appointments = Appointment::with(['patient.user', 'doctor.user'])
+    ->get();
+return $appointments;
+```
+Aquí se llama al modelo `Appointments`, y con las relaciones ya definidas dentro de dicho modelo, se hace una consulta a `patient` y `doctor`. Ahora si llamo a la ruta de al api (`http://127.0.0.1:8000/api/appointments`), se muestra lo siguiente:
+```js
+[
+  {
+    "id": 1,
+    "patient_id": 8,
+    "doctor_id": 1,
+    "date": "2025-08-28T04:00:00.000000Z",
+    "start_time": "2025-09-04T12:00:00.000000Z",
+    "end_time": "2025-09-04T12:15:00.000000Z",
+    "duration": 15,
+    "reason": "Dolor en el cuello, ocasionando la percepción de que le falta su cabeza   ",
+    "status": 2,
+    "created_at": "2025-08-27T01:44:50.000000Z",
+    "updated_at": "2025-08-29T04:36:22.000000Z",
+    "patient": {
+      "id": 8,
+      "user_id": 17,
+      "blood_type_id": 7,
+      "created_at": "2025-08-27T01:39:02.000000Z",
+      "updated_at": "2025-08-27T01:39:02.000000Z",
+      "allergies": null,
+      "chronic_conditions": "Dolor crónico cervical (producto de tortura)",
+      "surgical_history": "Antigua fractura de pierna curada",
+      "family_history": "Padre falleció de fiebre del pantano",
+      "observations": "Paciente con historial de encarcelamiento y decapitación no completada",
+      "emergency_contact_name": "Catelyn Stark",
+      "emergency_contact_relationship": "Esposa",
+      "emergency_contact_phone": "56999887766",
+      "date_of_birth": "1960-02-15",
+      "photo": null,
+      "user": {
+        "id": 17,
+        "name": "Eddard Stark",
+        "email": "ned.stark@gmail.com",
+        "email_verified_at": "2025-08-27T01:39:01.000000Z",
+        "two_factor_confirmed_at": null,
+        "dni": "14326789-2",
+        "phone": "56970011223",
+        "address": "Invernalia, Norte, Poniente",
+        "current_team_id": null,
+        "profile_photo_path": null,
+        "created_at": "2025-08-27T01:39:02.000000Z",
+        "updated_at": "2025-08-27T01:39:02.000000Z",
+        "profile_photo_url": "https://ui-avatars.com/api/?name=E+S&color=7F9CF5&background=EBF4FF"
+      }
+    },
+    "doctor": {
+      "id": 1,
+      "user_id": 1,
+      "speciality_id": 1,
+      "medical_license_number": "MED123456",
+      "biography": "Dr. Clegane es un cardiólogo con más de 10 años de experiencia en el tratamiento de enfermedades del corazón.",
+      "is_active": 1,
+      "created_at": "2025-08-27T01:39:02.000000Z",
+      "updated_at": "2025-08-27T01:39:02.000000Z",
+      "user": {
+        "id": 1,
+        "name": "Sandor Clegane",
+        "email": "sandor@gmail.com",
+        "email_verified_at": "2025-08-27T01:39:01.000000Z",
+        "two_factor_confirmed_at": null,
+        "dni": "14563210-k",
+        "phone": "56970234712",
+        "address": "Tierras del Oeste, Poniente",
+        "current_team_id": null,
+        "profile_photo_path": null,
+        "created_at": "2025-08-27T01:39:01.000000Z",
+        "updated_at": "2025-08-27T01:39:01.000000Z",
+        "profile_photo_url": "https://ui-avatars.com/api/?name=S+C&color=7F9CF5&background=EBF4FF"
+      }
+    }
+  },
+]
+```
+Aquí la API trae las distintas citas programadas
+>Este sería un ejemplo de lo que hace, obviamente esto estará sujeto a cambios proximos, añadiendo más complejidad.
+En FullCalendar hay tipos de valor que debería recibir y que se deberían transformar para poder trabajaro con dichos datos. 
+Primero, los colores, observar el siguiente código:
+```php
+// routes/api.php
+return $appointments->map(function(Appointment $appointment){
+        return [
+            'id' => $appointment->id,
+            'title' => $appointment->patient->user->name,
+            'start' => $appointment->start->toIso8601String(),
+            'end' => $appointment->end->toIso8601String(),
+            'color' => $appointment->status->colorHex(),
+            'extendedProps' => [
+            ]
+        ];
+    })->values();
+```
+Aquí está en `color` el llamado a `$appointment`, es decir a: `app/Models/Appointment.php` y se accese a `status`, el cual en el modelo hace un llamado a `app/Enums/AppointmentEnum.php` el cual tiene esto:
+```php
+// app/Enums/AppointmentEnum.php
+ public function colorHex(): string
+    {
+        return match ($this) {
+            self::SCHEDULED => '#3490dc', // Azul
+            self::COMPLETED => '#38c172', // Verde
+            self::CANCELLED => '#e3342f', // Rojo
+        };
+    }
+```
+Aquí se crea el método `colorHex()`, que devuele un color en especifico en base a si la cita es `SCHEDULED, COMPLETED o CANCELLED `, en base a un color exadecimal, formato que FullCalendar soporta, por ejemplo, en el mismo fichero de Enum está el método `color()`, el cual devuelve colores escritos de manera normal en ingles, estos solo fucnionan con Tailwind, para FullCalendar se necesitan los colores en formato exadecimal.
+
+Siguiendo con la transformación de datos, está `'start'` y `'end'`. Dichos valores son arrojados en un formato no utilizado por FullCalendar. Para cambiar eso nuevamente en el modelo de Appointment se crean los **accesores** `end` y `start`. 
+### Accesores
+Un accesor es un método que se ejecuta **cuando se lee un atributo del modelo**. Es decir, en vez de devolver directamente el valor que está en la base de datos, te permite transformarlo antes de entregarlo.
+FullCalendar no maneja y trata los datos de fecha como lo hace Laravel, por lo que se necestia transformar los valores antes de pasarlos al FullCalendar. Creando así estos 2 accesores:
+```php
+// app/Models/Appointment.php
+class Appointment extends Model
+{
+    public function start(): Attribute
+        {
+            return Attribute::make(
+                get: function () {
+                    $date = $this->date->format('Y-m-d');
+                    $time = $this->start_time->format('H:i:s');
+
+                    return Carbon::parse("{$date} {$time}");
+                }
+            );
+    }
+
+    public function end(): Attribute
+        {
+            return Attribute::make(
+                get: function () {
+                    $date = $this->date->format('Y-m-d');
+                    $time = $this->end_time->format('H:i:s');
+
+                    return Carbon::parse("{$date} {$time}");
+                }
+            );
+    }
+}
+```
+Etonces en dichos **accesores** lo que se hace es contruir un objeto `Carbon` (fecha+hora completa) al momento de acceder a `$appointment->start` y `$appointment->end` en la API:
+- `$appointment->start` no devuelve el valor "tal cual" se guardo en la BD
+- Devuelve un objeto `Carbon` ya combinado, para que luego se pueda hacer lo del código de `routes/api.php`:
+```js
+// routes/api.php
+'start' => $appointment->start->toIso8601String(),
+'end' => $appointment->end->toIso8601String(),
+```
+Y ahora, `toIso8601String()` es un método **Carbon** el cual convierte la fecha a un string con formato **ISO 8601**, que es el estándar que espera FullCalendar, sería algo como: `"2025-09-04T11:00:00-04:00"`.

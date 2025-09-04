@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 /* C52: Búsqueda de disponibilidad, selección de horarios y resumen de cita */
+
 Route::get('/patients', function (Request $request) {
 
     return User::query()
@@ -36,3 +37,23 @@ Route::get('/patients', function (Request $request) {
             ];
         });
 })->name('api.patients.index');
+
+// C59: Calendario
+Route::get('/appointments', function (Request $request) {
+    $appointments = Appointment::with(['patient.user', 'doctor.user'])
+        ->whereBetWeen('date', [$request->start, $request->end])
+        ->get();
+
+    // Configurando el formato de salida para que lo reciba FullCalendar
+    return $appointments->map(function(Appointment $appointment){
+        return [
+            'id' => $appointment->id,
+            'title' => $appointment->patient->user->name,
+            'start' => $appointment->start->toIso8601String(),
+            'end' => $appointment->end->toIso8601String(),
+            'color' => $appointment->status->colorHex(),
+            'extendedProps' => [
+            ]
+        ];
+    })->values();
+})->name('api.appointments.index');

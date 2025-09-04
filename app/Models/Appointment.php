@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Enums\AppointmentEnum;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 
 class Appointment extends Model
@@ -25,6 +27,33 @@ class Appointment extends Model
         'status' => AppointmentEnum::class,
     ];
 
+    // C59: Calendario
+    //Accesores
+    public function start(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                $date = $this->date->format('Y-m-d');
+                $time = $this->start_time->format('H:i:s');
+
+                return Carbon::parse("{$date} {$time}");
+            }
+        );
+    }
+
+    //Accesores
+    public function end(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                $date = $this->date->format('Y-m-d');
+                $time = $this->end_time->format('H:i:s');
+
+                return Carbon::parse("{$date} {$time}");
+            }
+        );
+    }
+
     public function patient()
     {
         return $this->belongsTo(Patient::class);
@@ -37,7 +66,8 @@ class Appointment extends Model
 
     // C55: Consultation
     // --> Una consulta por cita / Relación uno a uno
-    public function consultation(){
+    public function consultation()
+    {
         return $this->hasOne(Consultation::class);
     }
 }

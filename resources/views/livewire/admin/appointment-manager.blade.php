@@ -31,7 +31,8 @@
             </x-wire-select>
 
             <div class="lg:pt-7">
-                <x-wire-button wire:click="searchAvailability" class="w-full" color="primary" {{-- :disabled="$appointmentEdit && !$appointmentEdit->status->isEditable()" --}}>
+                <x-wire-button wire:click="searchAvailability" class="w-full" color="primary"
+                :disabled="$appointmentEdit && !$appointmentEdit->status->isEditable()">
                     Buscar disponibilidad
                 </x-wire-button>
 

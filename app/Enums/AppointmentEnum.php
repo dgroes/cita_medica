@@ -11,9 +11,9 @@ enum AppointmentEnum: int
     public function label(): string
     {
         return match ($this) {
-            self::SCHEDULED => 'Programada',
-            self::COMPLETED => 'Completada',
-            self::CANCELLED => 'Cancelada',
+            self::SCHEDULED => 'Programado',
+            self::COMPLETED => 'Completado',
+            self::CANCELLED => 'Cancelado',
         };
     }
 
@@ -24,5 +24,11 @@ enum AppointmentEnum: int
             self::COMPLETED => 'green',
             self::CANCELLED => 'red',
         };
+    }
+
+    //Método para verificar si una cita es editable
+    public function isEditable(): bool
+    {
+        return $this === self::SCHEDULED;
     }
 }

@@ -393,4 +393,41 @@ public function addPrescription()
     }
 ```
 Etonces además de agregar un nuevo formulario de `prescriptions` en formato de un nuevo array, con spinner se le agrega dinamismo. Con Alpine hay en ocaciones pequeños retrasos en la carga dinamica de algunos componentes. **con `spinner` dentro de un `x-button` de WireUI se añade un spinner de carga antes de que se carge el nuevo elemento en el DOM.**. En este caso se hace el `spinner` cuando se accede al método `addPrescription` del controller de consultas.
-## C58:
+## C58: Buscar todas las consultas
+Dentro de una consulta están lo botontes de "Ver Historial" y "Consultas Anteriores", este último enseña las consultas previas que ha tenido un paciente. Pero ahora dentro de ese modal se añadió el botón de "Ver todas las consultas en detalle". Dentro de modal, en la plantilla blade está esto:
+```php
+// resources/views/livewire/admin/consultation-manager.blade.php
+<x-wire-button
+    href="{{ route('admin.appointments.index', ['namePatient' => $consultation->appointment->patient->user->name]) }}"
+>
+```
+Al hacer clic al botón lo que se envia sería algo así: `/admin/appointments?namePatient=Eddard+Stark`.
+Entonces el index (`resources/views/admin/appointments/index.blade.php`) es el que recibe la patición y el que se encarga de mostrar la tabla de citas. En este punto el parámetro (`namePatient`) ya está en la request, por lo se puede acceder a él con `request('namePatient')`. Aquí luego está esto:
+```php
+// resources/views/admin/appointments/index.blade.php
+@livewire('admin.datatables.appointment-table', [
+    'namePatient' => request('namePatient') ?? null
+])
+```
+En ese código se le pasa la variable al componente Livewire que genera la tabla.
+Ya dentro del componente de la tabla `AppointmentTable` está la propiedad pública:
+```php
+// app/Livewire/Admin/Datatables/AppointmentTable.php
+public ?string $namePatient = null;
+```
+- Cuando Livewire monta el componente, recibe el valor que se le manda desde el `@livewire(...)`.
+- Entonces, `$this->namePatient` queda igual a `"Eddard Stark"`.
+Para usar el valor en la tabla se crea el método `mount()` aquí se verifica si existe un nombre de paciente y se usa para setear el buscador de la tabla:
+```php
+// app/Livewire/Admin/Datatables/AppointmentTable.php
+public function mount($namePatient = null): void
+{
+    $this->namePatient = $namePatient;
+
+    if ($this->namePatient) {
+        $this->setSearch($this->namePatient);
+    }
+}
+```
+Con esto, cuando se carge la tabla, el input de búsqueda ya tendrá escrito el nombre `"Eddard Stark"` y la tabla estará filtrada automáticamente.
+

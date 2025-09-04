@@ -30,7 +30,7 @@
 
     {{-- Tabs: Consulta méidca y Recetas médicas --}}
     <x-wire-card>
-        <x-tabs active="prescriptions">
+        <x-tabs active="consultation">
 
             {{-- Pestaña de navegación --}}
             <x-slot name="header">
@@ -200,7 +200,7 @@
     {{-- Modal de consultas anteriores del paciente --}}
     <x-wire-modal-card title="Consultas anteriores" name="previousConsultationsModal" width="4xl">
         @forelse ($previousConsultations as $consultation)
-            <a href="{{ route('admin.appointments.show', $consultation->appointment_id) }}"
+            <a href="{{ route('admin.appointments.consultation', $consultation->appointment_id) }}"
                 class="block p-5 rounded-lg shadow-md border-gray-200 hover:border-indigo-400 hover:shadow-indigo-100 transition-all duration-200"
                 target="_blank">
 
@@ -234,7 +234,7 @@
                 <i class="fa-solid fa-inbox text-4xl text-gray-300"></i>
 
                 <p class="mt-4 text-sm font-medium text-gray-500">
-                    No se encontraron consultas anteriores para este paciente.
+                    No se encontraron consultas previas a esta para este paciente.
                 </p>
 
             </div>
@@ -242,7 +242,14 @@
 
         {{-- Botón para cerrar el modal --}}
         <x-slot name="footer">
-            <div class="flex justify-end">
+            <div class="flex justify-end space-x-4">
+                {{-- C58: Buscar todas las consultas --}}
+                <x-wire-button
+                    href="{{ route('admin.appointments.index', ['namePatient' => $consultation->appointment->patient->user->name]) }}"
+                >
+                    Ver todas las consultas en detalle
+                </x-wire-button>
+
                 <x-wire-button outline gray sm x-on:click="$closeModal('previousConsultationsModal')">
                     Cerrar
                 </x-wire-button>

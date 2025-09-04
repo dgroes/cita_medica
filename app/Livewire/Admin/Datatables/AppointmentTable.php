@@ -22,6 +22,20 @@ class AppointmentTable extends DataTableComponent
         $this->setPrimaryKey('id');
     }
 
+
+    /* C58: Buscar todas las consultas */
+    public ?string $namePatient = null;
+
+    public function mount($namePatient = null): void
+    {
+        $this->namePatient = $namePatient;
+
+        if ($this->namePatient) {
+            // Inicializa la búsqueda con el nombre del paciente
+            $this->setSearch($this->namePatient);
+        }
+    }
+
     public function columns(): array
     {
         return [
@@ -56,8 +70,7 @@ class AppointmentTable extends DataTableComponent
             Column::make("Acción")
                 ->label(function ($row) {
                     return view('admin.appointments.actions', ['appointment' => $row]);
-                })
-
+                }),
         ];
     }
 }

@@ -139,7 +139,7 @@
     </x-wire-card>
 
     {{-- Modal de historial médico del paciente --}}
-    <x-wire-modal-card title="Historia médica del paciente" name="historyModal" width="5xl">
+    <x-wire-modal-card title="Historia médica del paciente" name="historyModal" width="5xl" align="center">
         <div class="grid lg:grid-cols-4 gap-6">
 
             {{-- Tipo de sangre del paciente --}}
@@ -200,7 +200,7 @@
     </x-wire-modal-card>
 
     {{-- Modal de consultas anteriores del paciente --}}
-    <x-wire-modal-card title="Consultas anteriores" name="previousConsultationsModal" width="4xl">
+    <x-wire-modal-card title="Consultas anteriores" name="previousConsultationsModal" width="4xl" align="center">
         @forelse ($previousConsultations as $consultation)
             <a href="{{ route('admin.appointments.consultation', $consultation->appointment_id) }}"
                 class="block p-5 rounded-lg shadow-md border-gray-200 hover:border-indigo-400 hover:shadow-indigo-100 transition-all duration-200"

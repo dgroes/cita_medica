@@ -40,7 +40,13 @@
             'icon' => 'fa-solid fa-calendar-check',
             'href' => route('admin.appointments.index'),
             'active' => request()->routeIs('admin.appointments.*'),
-        ]
+        ],
+        [
+            'name' => 'Calendario',
+            'icon' => 'fa-solid fa-calendar-days',
+            'href' => route('admin.calendar.index'),
+            'active' => request()->routeIs('admin.calendar.*')
+        ],
     ];
 @endphp
 <aside id="logo-sidebar"

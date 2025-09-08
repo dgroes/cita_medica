@@ -705,3 +705,130 @@ Para el uso de un modal dentro del calendario, se hace uso de WireUI nuevamente,
 Primero se le agrega un estio al calendar, mes en concreto al botón el cual muestra la cita en el calendario. Aquí se le agrega el estilo de `pointer` al cursor cuando pasa por encima del botón.
 **Redirección**
 Además de lo básico a mostrar dentro del modal, está al final el botón de redirección. Este botón redirige a `selectedEvent.url`. Dicha ruta fue especificada en la API. Entonces mandará al usuario a la gestión de la cita. **Esta acción estaría pensada para el uso del Doctor**.
+## C61: Roles y permisos
+Para la asignación de permisos dentro del sistema, se opta por no tener una gestión de permisos para un perfil adminstrador, en su lugar **se realizará la asignación de permisos por medio de las `seeders`**.
+```bash
+❯ php artisan make:seeder PermissionSeeder
+
+   INFO  Seeder [database/seeders/PermissionSeeder.php] created successfully.  
+```
+En el sistema hay distintos modulos, por ejemplo, visualizar el dashboard, roles y permisos, usuarios, pacientes, doctores, citas médicas, etc.
+Para poder tener acceso a dichas partes del sistema, se le asignaran dichos permisos a los distintos roles que hay. Para esto dentro del seeder deberá estar lo siguiente:
+```php
+// database/seeders/PermissionSeeder.php
+public function run(): void
+    {
+        $permissions = [
+            'access_dashboard',
+
+            'create_role',
+            'read_role',
+            'update_role',
+            'delete_role',
+
+            'create_user',
+            'read_user',
+            'update_user',
+            'delete_user',
+
+            'read_paciente',
+            'update_paciente',
+
+            'read_doctor',
+            'update_doctor',
+            
+            'create_appointment',
+            'read_appointment',
+            'update_appointment',
+            'delete_appointment',
+
+            'read_calendar',
+        ];
+    }
+```
+Aquí están separados por partes, esto está relacionado con el sidebar. Dentro de `layouts/includes/admin/sidebar` hay un array de `$links`, el cual muestra las distintas partes del sistema. Dichas partes son las que se hablan aquí en el Seeder.
+Ahora una modificación al seeder `RoleSeeder`.
+```php
+$roles = [
+    'Paciente' => [
+        'access_dashboard',
+        'create_appointment',
+        'read_appointment',
+        'read_calendar',
+    ],
+
+    'Doctor' => [
+        'access_dashboard',
+        'read_appointment',
+        'update_appointment',
+        'delete_appointment',
+        'read_calendar',
+    ],
+
+    'Recepcionista' => [
+        'access_dashboard',
+
+        'create_user',
+        'read_user',
+        'update_user',
+        'delete_user',
+
+        'read_paciente',
+        'update_paciente',
+
+        'read_doctor',
+        'update_doctor',
+
+        'create_appointment',
+        'read_appointment',
+        'update_appointment',
+        'delete_appointment',
+
+        'read_calendar',
+
+    ],
+]
+```
+Aquí demás de la creación de 3 roles del sistema (paciente, doctor y recepcionista) a cada rol se le añade un array con el nombre de los "permisos creados". Luego bastará con 
+```php
+foreach ($roles as $role => $permissions) {
+    Role::create([
+        'name' => $role
+    ])
+    ->givePermissionTo($permissions);
+}
+
+
+Role::create([
+    'name'=> 'Admin',
+])->givePermissionTo(Permission::all());
+``` 
+En el bucle lo que pasa el lo siuiente:
+- Hay un array de `$roles` donde la **clave** es el nombre del rol (ej:`"Paciente"`, `"Doctor"`, `"Recepcionista"`) y el **valor** es un array de permisos (ej: `['access_dashboard', 'create_appointment', ...]`).
+```php
+$roles = [
+    'Paciente' => ['access_dashboard', 'create_appointment', ...],
+    'Doctor' => ['access_dashboard', 'read_appointment', ...],
+];
+```
+- El `foreach` recorre ese array:
+    - `$role` -> contiente el nombre del rol (ej: `"Paciente"`).
+    - `$permissions` -> contiente la lista de permisos que le corresponden a ese rol.
+```php
+Role::create([
+    'name' => $role
+])
+->givePermissionTo($permissions);
+```
+- `Role::create(['name' => $role])` crea un nuevo rol en la BD con ese nombre.
+- `->givePermissionTo($permissions)` inmediatamente le asigna los perisos definidos en el array `$permissions`.
+Ejemplo: Se crea rol `"Doctor"` y Automáticamente se le asignan permisos como `"read_appointment"`, `"update_appointment"`, etc.
+Luego aquí:
+```php
+Role::create([
+    'name'=> 'Admin',
+])->givePermissionTo(Permission::all());
+```
+- Se crea un rol llamado `"Admin"`
+- En vez de pasarle un array de permisos como antes, se le da directamente `Permission::all()` que devuele **todos los permisos registrados en la tabla**
+- resultado: el rol `"Admin"` tiene **acceso total** a todo lo que exista

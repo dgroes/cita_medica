@@ -38,8 +38,8 @@ class RoleSeeder extends Seeder
                 'update_user',
                 'delete_user',
 
-                'read_paciente',
-                'update_paciente',
+                'read_patient',
+                'update_patient',
 
                 'read_doctor',
                 'update_doctor',

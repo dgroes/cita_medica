@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\AppointmentController;
 use App\Http\Controllers\Admin\CalendarController;
+use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DoctorController;
 use App\Http\Controllers\Admin\PatientController;
 use App\Http\Controllers\Admin\RoleController;
@@ -10,9 +11,7 @@ use Illuminate\Support\Facades\Route;
 
 /* C06: Ruta Admin */
 
-Route::get('/', function () {
-    return view('admin.dashboard');
-})->name('dashboard');
+Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
 /* C22: Ruta para los roles (Route::resource): */
 Route::resource('roles', RoleController::class);

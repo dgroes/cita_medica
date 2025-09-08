@@ -832,3 +832,49 @@ Role::create([
 - Se crea un rol llamado `"Admin"`
 - En vez de pasarle un array de permisos como antes, se le da directamente `Permission::all()` que devuele **todos los permisos registrados en la tabla**
 - resultado: el rol `"Admin"` tiene **acceso total** a todo lo que exista
+## C62: Restricción de rutas
+Antes de seguir, crear el controller de Dashboard:
+```bash
+❯ php artisan make:controller Admin/DashboardController
+
+   INFO  Controller [app/Http/Controllers/Admin/DashboardController.php] created successfully.  
+
+```
+Dentro del  `DashboardController` dentro del método index está lo siguiente:
+```php
+public function index()
+    {
+        Gate::authorize('access_dashboard');
+        return view('admin.dashboard');
+    }
+```
+Aquí se utiliza  `Gate` el cual forma parte del **sistema de autorización** que Laravel incluye de serie (antes incluso de usar paquetes como *spatie/laravel-permission*). Se usa para definir y verificar **políticas de acceso** (permissions simples) a ciertas acciones.
+Entonces en esta linea: ` Gate::authorize('access_dashboard')` pasa:
+1. Verificar si el **usuario autenticado** tiene el permiso/capacidad `acces_dashoard`.
+2. Si **sí lo tiente**, la ejecución continúa y se muestra la vista.
+3. Si **no lo tiene**, Laravel lanza automáticamente un `AuthorizationException`, que normalmente devuelve un HTTP 403 (Forbiden). (en mi caso: "403
+Esta acción no está autorizada.").
+Entonces lo que hace es **proteger la ruta** para que solo entren usuarios con ese permiso
+### Relación con spatie/laravel-permission:
+Aunque `Gate` es nativo de Laravel, cuando instalas el paquete de **Spatie** y configuras los permisos, este se **integra automáticamente con Gate**.
+- Si un usuario tiene el permiso `"access_dashboard"` (gracias al rol asignado vía Spatie), entonces:
+```php
+Gate::allows('access_dashboard'); // true
+```
+Funciona correctamente. Esto pasa porque Spatie hace un **hook** al sistema de autorización de Laravel y define cómo resolver esos permisos.
+### Cambio en Seed
+Para el desarrollo será comodo tener un user `Admin` por defecto, en este caso en `UserSeeder`. Dentro del foreach de asignación de roles está lo siguiente:
+```php
+// database/seeders/UserSeeder.php
+if ($user->email === 'davos@gmail.com') {
+    $user->assignRole('Admin');
+    continue;
+}
+
+if ($index < 9) {
+    $user->assignRole('Doctor');
+} else {
+    $user->assignRole('Paciente');
+}
+```
+Entonces primero se crea el `Admin` que será `Davos Seaworth` y luego pasará la creación de doctores y pacientes.

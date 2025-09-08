@@ -213,14 +213,19 @@ class UserSeeder extends Seeder
         ];
 
         /* C28: Asignación de Rol a User con Laravel Permission */
+        /* C62: Restricción de rutas */
         foreach ($users as $index => $userData) {
             $user = User::factory()->create($userData);
 
+            // Admin primero
+            if ($user->email === 'davos@gmail.com') {
+                $user->assignRole('Admin');
+                continue;
+            }
+
             if ($index < 9) {
-                // Los primeros 9 son Doctores
                 $user->assignRole('Doctor');
             } else {
-                // Del 10 en adelante son Pacientes
                 $user->assignRole('Paciente');
             }
         }

@@ -6,12 +6,12 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 
-// C59: Calendario
-class CalendarController extends Controller
+// C62: Restricción de rutas
+class DashboardController extends Controller
 {
     public function index()
     {
-        Gate::authorize('read_calendar');
-        return view('admin.calendar.index');
+        Gate::authorize('access_dashboard');
+        return view('admin.dashboard');
     }
 }

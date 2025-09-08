@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\BloodType;
 use App\Models\Patient;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class PatientController extends Controller
 {
@@ -14,11 +15,13 @@ class PatientController extends Controller
      */
     public function index()
     {
+        Gate::authorize('read_patient');
         return view('admin.patients.index');
     }
 
     public function edit(Patient $patient)
     {
+        Gate::authorize('update_patient');
         $bloodTypes = BloodType::all();
 
         return view('admin.patients.edit', compact('patient', 'bloodTypes'));
@@ -28,6 +31,7 @@ class PatientController extends Controller
      */
     public function update(Request $request, Patient $patient)
     {
+        Gate::authorize('update_patient');
         //Verificación para saber si "llegan todos los datos".
         // return $request->all();
 
@@ -54,5 +58,4 @@ class PatientController extends Controller
 
         return redirect()->route('admin.patients.edit', $patient);
     }
-
 }

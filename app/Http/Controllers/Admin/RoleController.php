@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Spatie\Permission\Models\Role;
 
 /* C22: Ruta para los roles (Route::resource): */
@@ -14,6 +15,8 @@ class RoleController extends Controller
      */
     public function index()
     {
+        /* C62: Restricción de rutas */
+        Gate::authorize('read_role');
         return view('admin.roles.index');
     }
 
@@ -22,6 +25,7 @@ class RoleController extends Controller
      */
     public function create()
     {
+        Gate::authorize('create_role');
         return view('admin.roles.create');
     }
 
@@ -30,6 +34,9 @@ class RoleController extends Controller
      */
     public function store(Request $request)
     {
+
+        Gate::authorize('create_role');
+
         /* C24: Creación de un nuevo registo */
         $request->validate([
             'name' => 'required|string|max:50|unique:roles,name',
@@ -52,6 +59,8 @@ class RoleController extends Controller
      */
     public function show(Role $role)
     {
+        /* C62: Restricción de rutas */
+        Gate::authorize('read_role');
         return view('admin.roles.show', compact('role'));
     }
 
@@ -60,6 +69,8 @@ class RoleController extends Controller
      */
     public function edit(Role $role)
     {
+        Gate::authorize('update_role');
+
         //Impedir que se puedan editar los roles por defecto de las seeds (admin, doctor, paciente, recepcionista)
         if($role->name === 'Paciente' || $role->name === 'Doctor' || $role->name === 'Administrador' || $role->name === 'Recepcionista') {
             session()->flash('swal', [
@@ -78,6 +89,8 @@ class RoleController extends Controller
      */
     public function update(Request $request, Role $role)
     {
+        Gate::authorize('update_role');
+
         $request->validate([
             'name' => 'required|string|max:50|unique:roles,name,' . $role->id,
         ]);
@@ -98,6 +111,8 @@ class RoleController extends Controller
      */
     public function destroy(Role $role)
     {
+        Gate::authorize('delete_role');
+
         //Impedir que se puedan editar los roles por defecto de las seeds (admin, doctor, paciente, recepcionista)
         if($role->name === 'Paciente' || $role->name === 'Doctor' || $role->name === 'Administrador' || $role->name === 'Recepcionista') {
             session()->flash('swal', [

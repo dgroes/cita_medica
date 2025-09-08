@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Doctor;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class DoctorController extends Controller
 {
@@ -13,6 +14,7 @@ class DoctorController extends Controller
      */
     public function index()
     {
+        Gate::authorize('read_doctor');
         return view('admin.doctors.index');
     }
 
@@ -21,6 +23,7 @@ class DoctorController extends Controller
      */
     public function edit(Doctor $doctor)
     {
+        Gate::authorize('update_doctor');
         // Traer solo el id y el name de las especialidades
         $specialities = \App\Models\Speciality::select('id', 'name')->get();
 
@@ -34,6 +37,7 @@ class DoctorController extends Controller
      */
     public function update(Request $request, Doctor $doctor)
     {
+         Gate::authorize('update_doctor');
         $data = $request->validate([
             'speciality_id' => 'nullable|required|exists:specialities,id',
             'medical_license_number' => 'nullable|required|string|max:255|unique:doctors,medical_license_number,' . $doctor->id,
@@ -53,6 +57,7 @@ class DoctorController extends Controller
 
     /* C43: Horarios de Doctores */
     public function schedules(Doctor $doctor){
+         Gate::authorize('update_doctor');
         return view('admin.doctors.schedules', compact('doctor'));
     }
 

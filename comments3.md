@@ -674,3 +674,34 @@ Etonces en dichos **accesores** lo que se hace es contruir un objeto `Carbon` (f
 'end' => $appointment->end->toIso8601String(),
 ```
 Y ahora, `toIso8601String()` es un método **Carbon** el cual convierte la fecha a un string con formato **ISO 8601**, que es el estándar que espera FullCalendar, sería algo como: `"2025-09-04T11:00:00-04:00"`.
+## C60: Modal de calendario
+### API
+Dentro de la API se añadira esta nueva parte de código:
+```php
+'extendedProps' => [
+                // C60: Modal de calendario
+                // Envio de información adicional de la cita, pea su uso en el modal
+                'dateTime'  => $appointment->start->format('d/m/Y H:i:s'),
+                'patient'   => $appointment->patient->user->name,
+                'doctor'    => $appointment->doctor->user->name,
+                'status'    => $appointment->status->label(),
+                'color'     => $appointment->status->color(),
+                'url'       => route('admin.appointments.consultation', $appointment),
+            ]
+```
+Estos serán los datos a enviar a la vista, la fecha, paciente, doctor, status, color y url. Esta última, la url tiene la dirección de la "gestión de consulta" del paciente.
+### View
+Para el uso de un modal dentro del calendario, se hace uso de WireUI nuevamente, con su modal. Entonces dentro de `admin/calendar/index` está lo siguiente:
+**Estilos a FullCallendar**
+```php
+@push('css')
+    <style>
+        .fc-event {
+            cursor: pointer;
+        }
+    </style>
+@endpush
+```
+Primero se le agrega un estio al calendar, mes en concreto al botón el cual muestra la cita en el calendario. Aquí se le agrega el estilo de `pointer` al cursor cuando pasa por encima del botón.
+**Redirección**
+Además de lo básico a mostrar dentro del modal, está al final el botón de redirección. Este botón redirige a `selectedEvent.url`. Dicha ruta fue especificada en la API. Entonces mandará al usuario a la gestión de la cita. **Esta acción estaría pensada para el uso del Doctor**.

@@ -7,9 +7,60 @@
         'name' => 'Calendario',
     ],
 ]">
+    {{-- C60: Modal de calendario --}}
+    {{-- Modificación de CSS del calendario --}}
+    @push('css')
+        <style>
+            .fc-event {
+                cursor: pointer;
+            }
+        </style>
+    @endpush
+
+
     {{-- C59: Calendario --}}
     {{-- Inicializar Alpine --}}
     <div x-data="data()">
+
+        {{-- Modal de la cita en el calendar --}}
+        <x-wire-modal-card title="Cita Médica" name="appointmentModal" width="md" align="center">
+            <div class="space-y-4 mb-4">
+
+                {{-- Fecha y hora de la Consulta --}}
+                <div>
+                    <strong>Fecha y Hora:</strong>
+                    <span x-text="selectedEvent.dateTime"></span>
+                </div>
+
+                {{-- Paciente de la consulta --}}
+                <div>
+                    <strong>Paciente:</strong>
+                    <span x-text="selectedEvent.patient"></span>
+                </div>
+
+                {{-- Médico de la consulta --}}
+                <div>
+                    <strong>Médico:</strong>
+                    <span x-text="selectedEvent.doctor"></span>
+                </div>
+
+                {{-- Estado de la consulta --}}
+                <div>
+                    <strong>Estado:</strong>
+                    <span x-text="selectedEvent.status"></span>
+                </div>
+
+            </div>
+
+            {{-- Botón para Ir a gestión de la Cita --}}
+            <a x-bind:href="selectedEvent.url" class="w-full">
+                <x-wire-button class="w-full">
+                    Gestionar Cita
+                </x-wire-button>
+            </a>
+
+        </x-wire-modal-card>
+
         <div x-ref='calendar'></div>
     </div>
 
@@ -19,6 +70,30 @@
         <script>
             function data() {
                 return {
+
+                    selectedEvent: {
+                        dateTime: null,
+                        patient: null,
+                        doctor: null,
+                        status: null,
+                        color: null,
+                        url: null,
+                    },
+
+                    openModal(info) {
+                        this.selectedEvent = {
+                            dateTime: info.event.extendedProps.dateTime,
+                            patient: info.event.extendedProps.patient,
+                            doctor: info.event.extendedProps.doctor,
+                            status: info.event.extendedProps.status,
+                            color: info.event.extendedProps.color,
+                            url: info.event.extendedProps.url
+                        };
+
+                        $openModal('appointmentModal');
+                    },
+
+
                     // Inicializar el calendario si bien es cargado el componente, por ejemplo, prueba hacer un alert
                     init() {
                         //Alert de prueba
@@ -63,9 +138,6 @@
                             slotMinTime: "{{ config('schedule.start_time') }}",
                             slotMaxTime: "{{ config('schedule.end_time') }}",
 
-                            // Scroll a hora actual al cargar la vista
-                            scrollTime: "{{ date('H:i:s') }}",
-
                             events: {
                                 url: '{{ route('api.appointments.index') }}',
                                 failure: function() {
@@ -73,6 +145,13 @@
                                     console.warn('Error al cargar los eventos');
                                 },
                             },
+
+                            // Evento para enviar información al modal
+                            eventClick: (info) => this.openModal(info),
+
+                            // Scroll a hora actual al cargar la vista
+                            scrollTime: "{{ date('H:i:s') }}",
+
                         });
 
                         // Renderizar el calendario

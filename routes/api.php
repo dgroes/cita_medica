@@ -45,7 +45,7 @@ Route::get('/appointments', function (Request $request) {
         ->get();
 
     // Configurando el formato de salida para que lo reciba FullCalendar
-    return $appointments->map(function(Appointment $appointment){
+    return $appointments->map(function (Appointment $appointment) {
         return [
             'id' => $appointment->id,
             'title' => $appointment->patient->user->name,
@@ -53,6 +53,14 @@ Route::get('/appointments', function (Request $request) {
             'end' => $appointment->end->toIso8601String(),
             'color' => $appointment->status->colorHex(),
             'extendedProps' => [
+                // C60: Modal de calendario
+                // Envio de información adicional de la cita, pea su uso en el modal
+                'dateTime'  => $appointment->start->format('d/m/Y H:i:s'),
+                'patient'   => $appointment->patient->user->name,
+                'doctor'    => $appointment->doctor->user->name,
+                'status'    => $appointment->status->label(),
+                'color'     => $appointment->status->color(),
+                'url'       => route('admin.appointments.consultation', $appointment),
             ]
         ];
     })->values();

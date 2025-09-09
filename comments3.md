@@ -878,3 +878,18 @@ if ($index < 9) {
 }
 ```
 Entonces primero se crea el `Admin` que será `Davos Seaworth` y luego pasará la creación de doctores y pacientes.
+## C63: Refacorizar Sidebar
+### Explicación de Composite
+Mäs info en [Refactoring Guru](https://refactoring.guru/es/design-patterns/composite)
+Para mejorar el actual comportamiento del sidebar (`views/layouts/includes/admin/sidebar`). Se opta por un cambio el cual mejora su comportamiento actual el cual ya posee muchas condicionales. Es el uso de Composite.
+**Composite** es un patron estrucural de diseño que se usa cuando se tienen **objetos individuales** y **composiciones de objetos** que deben ser tratados de **manera uniforme**. En otras palabras, permite estrucurar objetos en forma de árbol (jerarquía) donde una hoja y un grupo de hojas se manipulan igual.
+### Interfaz
+Primero está la creación de la interfaz `app/Services/Sidebar/ItemSidebar.php`. Aquí estarán principalmente todos los métodos que deben tener todos los tipos de links.
+```php
+// app/Services/Sidebar/ItemSidebar.php
+public function render(): string;
+public function authorize(): bool;
+```
+- `render()` se encarga de traer los estilos para mostrar un header, grupo, link
+- `authorize()` determina si el usuario cuenta con los permisos necesarios para visualizar los contenidos.
+

@@ -45,9 +45,7 @@ class ItemLink implements ItemSidebar
 
     public function authorize(): bool
     {
-        /* return count($this->can)
-            ? Gate::any($this->can)
-            : true; */
-            return true;
+        return true;
     }
 }
+

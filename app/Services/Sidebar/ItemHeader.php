@@ -27,3 +27,4 @@ class ItemHeader implements ItemSidebar
         return true;
     }
 }
+

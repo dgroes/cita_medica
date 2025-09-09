@@ -8,3 +8,4 @@ interface ItemSidebar
 
     public function authorize(): bool;
 }
+

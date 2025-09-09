@@ -47,3 +47,4 @@ class ItemGroup implements ItemSidebar
         return false;
     }
 }
+

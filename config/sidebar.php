@@ -1,6 +1,6 @@
 <?php
 
-return [
+/* return [
     [
         'type' => 'link',
         'title' => 'Dashboard',
@@ -54,3 +54,5 @@ return [
         'active' => request()->routeIs('admin.calendar.*')
     ],
 ];
+
+ */

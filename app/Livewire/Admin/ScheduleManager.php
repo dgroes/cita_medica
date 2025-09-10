@@ -83,12 +83,11 @@ class ScheduleManager extends Component
         }
         // Evento dede livewire
         /* C46: Alerta de SweetAlert2 con Livewire */
-        $this->dispatch(
-            'swal',
-            icon: 'success',
-            title: 'Horario guardado correctamente',
-            text: 'El horario del doctor ha sido actualizado.'
-        );
+        $this->dispatch('swal', [
+            'icon' => 'success',
+            'title' => 'Horario guardado correctamente',
+            'text' => 'El horario del doctor ha sido actualizado.'
+        ]);
     }
 
     public function render()

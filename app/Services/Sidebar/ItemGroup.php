@@ -25,6 +25,8 @@ class ItemGroup implements ItemSidebar
 
     public function render(): string
     {
+        // Con array_filter se recupera cada elmento del array $items
+        // Con esto se puede agrega una validación, lo que mostrará será los "items" a los que se tiene autorización
         $items = array_filter($this->items, function ($item) {
             return $item->authorize();
         });
@@ -33,12 +35,13 @@ class ItemGroup implements ItemSidebar
             'title' => $this->title,
             'icon' => $this->icon,
             'active' => $this->active,
-            'items' => $items,
+            'items' => $items, /* <- aquí van los items ya filtrados  */
         ])->render();
     }
 
     public function authorize(): bool
     {
+        // Iterar items del objeto ($item viene de ItemLink), para verificar si está autorizado para ver
         foreach ($this->items as $item) {
             if ($item->authorize()) {
                 return true;

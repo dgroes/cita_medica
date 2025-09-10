@@ -2,6 +2,8 @@
 
 namespace App\Services\Sidebar;
 
+use Illuminate\Support\Facades\Gate;
+
 // C63: Refacorizar Sidebar
 class ItemHeader implements ItemSidebar
 {
@@ -23,9 +25,12 @@ class ItemHeader implements ItemSidebar
         HTML;
     }
 
+    // Mëtodo para verificar si el usario tiene "los permisos" para visualizar "header" (el sidebar)
     public function authorize(): bool
     {
-        return true;
+        // Si hay un "elemento" dentro de "can" da True, sino False
+        return count($this->can)
+            ? Gate::any($this->can)
+            : true;
     }
 }
-

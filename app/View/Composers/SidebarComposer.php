@@ -17,6 +17,11 @@ class SidebarComposer
                 return $this->parseItem($item);
             });
 
+        // Verificación de autorización de items
+        $items = $items->filter(function ($item) {
+            return $item->authorize();
+        });
+
         $view->with('sidebarItems', $items);
     }
 

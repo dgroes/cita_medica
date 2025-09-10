@@ -50,12 +50,12 @@ class DoctorSeeder extends Seeder
                 'medical_license_number' => 'MED567890',
                 'biography' => 'Dra. Brienne de Tarth es una ginecóloga especializada en salud del sistema reproductivo femenino.'
             ],
-            [
+            /* [
                 'user_id' => 7,
                 'speciality_id' => 7, // Oftalmología
                 'medical_license_number' => 'MED123789',
                 'biography' => 'Dr. Davos Seaworth es un oftalmólogo con experiencia en enfermedades de los ojos y visión.'
-            ],
+            ], */
             [
                 'user_id' => 8,
                 'speciality_id' => 8, // Psiquiatría

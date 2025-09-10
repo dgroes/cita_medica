@@ -68,3 +68,105 @@ Las vistas a las cuales se les aplicaron restricciones de acciones serían:
     - `resources/views/admin/appointments/actions.blade.php`
 ## C65: Discriminación de citas/calendario
 Lo lógico en un sistema como este sería en le caso de que sea el usuario `Tormund Giantsbane` que solo me muestre mis citas y que en el calendario solo aparescan las citas asociadas a dicho usuario.
+Para el ejemplo se crearon un par de citas médicas:
+```bash
+mysql> select doctor_id, date, start_time, end_time, reason from appointments;
++-----------+------------+------------+----------+------------------------------+
+| doctor_id | date       | start_time | end_time | reason                       |
++-----------+------------+------------+----------+------------------------------+
+|         8 | 2025-09-11 | 09:00:00   | 09:15:00 | Moretón el la mejilla        |
+|         7 | 2025-09-12 | 10:30:00   | 10:45:00 | Amputación de mano derecha   |
+|         8 | 2025-09-13 | 08:45:00   | 09:00:00 | Dolor intenso en la cabeza   |
+|         7 | 2025-09-11 | 11:15:00   | 11:30:00 | Comezón intenso en brazo     |
++-----------+------------+------------+----------+------------------------------+
+```
+Aquí el `doctor_id` es "Petyr Baelish", teniendo dos citas, pero en calendario actualmente se muestran todas las citas, como en el `select` de arriba, para solucionar eso. Dentro de la tabla de citas debería estar lo siguiente:
+```php
+// app/Livewire/Admin/Datatables/AppointmentTable.php
+public function builder(): Builder
+    {
+        $query =  Appointment::query()
+            ->with('patient.user', 'doctor.user');
+
+        if (auth()->user()->hasRole('Doctor')) {
+            $query->whereHas('doctor', function ($query) {
+                $query->where('user_id', auth()->id());
+            });
+        }
+
+         if (auth()->user()->hasRole('Paciente')) {
+            $query->whereHas('patient', function ($query) {
+                $query->where('user_id', auth()->id());
+            });
+        }
+
+        return $query;
+    }
+```
+Aquí se hace una relación con el uso del modelo `Appointment`, para luego aplicar un filtrado si el usuario que está logeado es un paciente o doctor.
+De esta forma la visualización de los datos estará separada para cada rol.
+## C66: Query Scopes
+Para poder restringir las rutas de acceso (URL), se deberá hacer así. Primero se creará un `Scope Global`. En la terminal se creará el `scope` así:
+```bash
+❯ php artisan make:scope VerifyRole
+
+   INFO  Scope [app/Models/Scopes/VerifyRole.php] created successfully.  
+```
+Teniendo el fichero:
+```php
+// app/Models/Scopes/VerifyRole.php
+class VerifyRole implements Scope
+{
+    /**
+     * Apply the scope to a given Eloquent query builder.
+     */
+    public function apply(Builder $builder, Model $model): void
+    {
+        if (Auth::user()?->hasRole('Doctor')) {
+            $builder->whereHas('doctor', function ($builder) {
+                $builder->where('user_id', Auth::id());
+            });
+        }
+
+        if (Auth::user()?->hasRole('Paciente')) {
+            $builder->whereHas('patient', function ($builder) {
+                $builder->where('user_id', Auth::id());
+            });
+        }
+    }
+}
+```
+- Si el usuario logueado es **Doctor**:
+    - Solo verá citas (appointments) que estén relacionadas con su propio registro de doctor.
+    (esto asume que el modelo `Appointment` tiene una relación `doctor()` → `belongsTo(Doctor::class)`).
+- Si el usuario logueado es **Paciente**:
+    - Solo verá sus propias citas, porque el `whereHas('patient')` filtra por user_id igual al `auth()->id()`.
+Esto además deberá estar vinculado con el model del `Appointment`:
+```php
+// app/Models/Appointment.php
+use Illuminate\Database\Eloquent\Attributes\ScopedBy;
+use App\Models\Scopes\VerifyRole;
+
+#[ScopedBy([VerifyRole::class])]
+class Appointment extends Model
+{...}
+```
+Entonces en el modelo está `#[ScopedBy([VerifyRole::class])]` Eso indica que **cada vez que se ejecuta una consulta sobre** `Appointment`, se aplicará el scope `VerifyRole`.
+A nivel de consulta sería así:
+```php
+Appointment::all();
+```
+Y la consulta:
+```sql
+SELECT * FROM appointments
+WHERE EXISTS (
+    SELECT * FROM doctors
+    WHERE doctors.id = appointments.doctor_id
+    AND doctors.user_id = 5
+);
+```
+Donde `5` será el ID del usuario autenticado, lo mismo pasaría en paciente.
+Lo genial como se mencionó es que cada vez que se ejecuta una consulta sobre `Appointment` se aplica el scope, entonces funcionará internamente en: 
+- `Admin/AppointmentController.php`: Restringiendo las `id` de las `URL` para que se puedan acceder a las consultas del propio doctor. Por ejemplo si la ruta de `Editar/Cita` es: `http://127.0.0.1:8000/admin/appointments/1/edit`. Solo podrá acceder a dicha ruta el Doctor de dicha consulta. 
+- `Datatables/AppointmentTable.php`: Aquí solo se visualizarán las filas del doctor o paciente logeado, "no todos los resultados como si pasaría con Admin".
+

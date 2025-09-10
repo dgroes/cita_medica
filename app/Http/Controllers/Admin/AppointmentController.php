@@ -70,7 +70,8 @@ class AppointmentController extends Controller
     }
 
     // C56: Consultation(2)
-    public function consultation(Appointment $appointment){
+    public function consultation(Appointment $appointment)
+    {
         Gate::authorize('update_appointment');
         return view('admin.appointments.consultation', compact('appointment'));
     }

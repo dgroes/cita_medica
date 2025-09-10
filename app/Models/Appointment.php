@@ -3,9 +3,14 @@
 namespace App\Models;
 
 use App\Enums\AppointmentEnum;
+use App\Models\Scopes\VerifyRole;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Attributes\ScopedBy;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
+
+// C66: Query Scopes
+#[ScopedBy([VerifyRole::class])]
 
 class Appointment extends Model
 {
@@ -26,6 +31,7 @@ class Appointment extends Model
         'end_time' => 'datetime',
         'status' => AppointmentEnum::class,
     ];
+
 
     // C59: Calendario
     //Accesores

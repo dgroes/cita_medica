@@ -883,13 +883,232 @@ Entonces primero se crea el `Admin` que será `Davos Seaworth` y luego pasará l
 Mäs info en [Refactoring Guru](https://refactoring.guru/es/design-patterns/composite)
 Para mejorar el actual comportamiento del sidebar (`views/layouts/includes/admin/sidebar`). Se opta por un cambio el cual mejora su comportamiento actual el cual ya posee muchas condicionales. Es el uso de Composite.
 **Composite** es un patron estrucural de diseño que se usa cuando se tienen **objetos individuales** y **composiciones de objetos** que deben ser tratados de **manera uniforme**. En otras palabras, permite estrucurar objetos en forma de árbol (jerarquía) donde una hoja y un grupo de hojas se manipulan igual.
-### Interfaz
-Primero está la creación de la interfaz `app/Services/Sidebar/ItemSidebar.php`. Aquí estarán principalmente todos los métodos que deben tener todos los tipos de links.
+### 1. config/sidebar.php
+Aquí se definen los datos crudos del sidebar (tipo de ítem, ruta, titulo, icono, permisos, etc.):
 ```php
-// app/Services/Sidebar/ItemSidebar.php
-public function render(): string;
-public function authorize(): bool;
+// config/sidebar.php
+return [
+    [
+        'type' => 'header',
+        'title' => 'Gestión',
+    ],
+    [
+        'type' => 'link',
+        'title' => 'Dashboard',
+        'icon' => 'fa-solid fa-chart-pie',
+        'route' => 'admin.dashboard',
+        'active' => 'admin.dashboard',
+        'can' => ['access_dashboard'],
+    ],
+];
 ```
-- `render()` se encarga de traer los estilos para mostrar un header, grupo, link
-- `authorize()` determina si el usuario cuenta con los permisos necesarios para visualizar los contenidos.
+Este "array" previamente estaba en fichero `resources/views/layouts/includes/admin/sidebar.blade.php`, pero se traslado aquí para mantener la lógica separada e integrarlo con los ficheros posteriores.
+### 2. SidebarComposer
+Este fichero recibe ese `config` y lo transforma en **objetos** (`ItemHeader`, `ItemLink`, `ItemGroup`).
+Gracias al `View::composer('layouts.admin', SidebarComposer::class)` en `AppServiceProvider`, cada vez que se carga `layouts.admin`, se inyecta la variable `$sidebarItems`. Esa variable ya contiene los objetos listos para renderizarse.
+### 3. ServiceProvider
+Laravel tiene un ciclo de vida donde en el método `boot()` de los **service providers** se registran cosas que deben ejecutarse cuando la app arranca.  Aquí en el fichero está esto:
+```php
+// app/Providers/AppServiceProvider.php
+public function boot(): void
+    {
+        View::composer('layouts.admin', SidebarComposer::class);
+    }
+```
+Esto significa que "Cada vez que la vista `layouts.admin` se vaya a renderizar, Laravel va a llamar a la clase `SidebarComposer` y le va a pasar el objeto `View` para que pueda inyectarse datos."
+El flujo con el `SidebarComposer` sería el siguiente:
+1. El usuario entra a una página que hereda de `layouts.admin`
+2. Laravel ve que esa vista tiene una **view composer** registrado
+3. Ejecuta el método `composer(View $view)` de `SidebarComposer`
+4. El composer construye los objetos `ItemHeader`, `ItemLink`, `ItemGroup` a partir de `config/sidebar.php`
+5. Inyecta la colección en la vista con:
+```php
+// app/View/Composers/SidebarComposer.php
+$view->with('sidebarItems', $items);
+```
+6. Ahora, en `resources/views/layouts/includes/admin/sidebar.blade.php`, se puede hacer:
+```php
+// resources/views/layouts/includes/admin/sidebar.blade.php
+ @foreach ($sidebarItems as $item)
+    <li>
+        {!!  $item->render()!!}
+    </li>
+@endforeach
+```
+El resultado sería que gracias a ese composer registrado en el provider, cada vez que se abre el layout de administración, el sidebar ya viene armado con sus items listos para renderizar. Òsea `AppServiceProviders` es el **punto de entrada** que conecta al sidebar dinámico con el ciclo de vida de Laravel.
+### 4. Clases ítems
+En `ItemHeader`, `ItemGroup` e `ItemLink` pasa:
+- En todas se implementan la interfaz `ItemSidebar`.
+- Cada clase sabe cómo renderizarse `render()` y cúando mostrarse (`authorize()`)
+- Esto encapsula la lógica:
+    - `ItemHeader` -> imprime solo un texto decorativo
+    - `ItemLink` -> imprime un enlace con icono y verificación de permisos.
+    - `ItemGroup` -> agrupa links, renderiza solo los autorizados y delega a una view Blade `sidebar.item-group`.
+### 5. View sidebar.blade.php
+Rebice el `$sidebarItems` del composer y Renderiza cada ítem con: 
+```php
+@foreach ($sidebarItems as $item)
+    <li>
+        {!!  $item->render()!!}
+
+    </li>
+@endforeach
+```
+### 6. Patron Composite
+Aquí se tiene una jerarquía de objetos (`ItemGroup` puede contener varios `ItemLink` o incluso más grupos). Todos implementan la misma interfaz `ItemSidebar` y se puede tratarlos de forma uniforme (`$item->render()`, `item->authorize()`).
+### 7.  SidebarComposer Mäs en detalle
+Primerto está el método `compose`
+```php
+// app/View/Composers/SidebarComposer.php
+public function compose(View $view) 
+{
+    // 1. Obtiene el arreglo definido en config/sidebar.php
+    $items = collect(config('sidebar'))
+        ->map(function ($item) {
+            // 2. A cada item del config, lo transforma en un objeto (ItemLink, ItemHeader, ItemGroup)
+            return $this->parseItem($item);
+        });
+
+    // 3. Inyecta esa colección en la vista como $sidebarItems
+    $view->with('sidebarItems', $items);
+}
+```
+1. **Lee el archivo `config/sidebar.php`**:
+Este archivo tiene un array con elementos que describen el menú (tipo, título, icono, permisos, rutas, etc.)
+2. **Transforma cada elemento en un objeto de el dominoi (OO)**: 
+En ves de trabajar con arrays planos en la vista, pasa cada ítem al método `parseItem()`. Este método devuelve instancias de clase (`ItemLink`, `ItemHeader` e `ItemGroup`), todas implementando la interfaz `ItemSidebar`.
+3. **Entrega la colección a la vista**:
+`$view->with('sidebarItems', $items)` hace que en la Blade `layouts.admin` se tenga disponible una variable `$sidebarItems` que ya es una lista de objetos listos para `render()`. Y como la view `includes/admin/sidebar.blade.php` hereda de `layouts.admin`, es debido a eso que dentro del sidebar se puede utilizar dicha variable `$sidebarItems`.
+La idea clave del método es actuar como traductor entre configuración (datos planos) y objetos listos para pintar.
+
+Luego está el método `parseItem`
+```php
+// app/View/Composers/SidebarComposer.php
+public function parseItem($item)
+{
+    switch ($item['type']) {
+        case 'header':
+            return new ItemHeader(
+                title: $item['title'],
+                can: $item['can'] ?? []
+            );
+            break;
+
+        case 'link':
+            return new ItemLink(
+                title: $item['title'],
+                icon: $item['icon'] ?? 'fa-regular fa-circle',
+                href: $item['route'] ? route($item['route']) : '#',
+                active: $item['active'] ? request()->routeIs($item['active']) : false,
+                can: $item['can'] ?? []
+            );
+            break;
+
+        case 'group':
+            $group = new ItemGroup(
+                title: $item['title'],
+                icon: $item['icon'] ?? 'fa-regular fa-folder',
+                active: $item['active'] ? request()->routeIs($item['active']) : false
+            );
+
+            foreach ($item['items'] as $subItem) {
+                // recursividad: cada subitem puede ser link o header, etc.
+                $group->add($this->parseItem($subItem));
+            }
+
+            return $group;
+            break;
+
+        default:
+            throw new \InvalidArgumentException("Unknown sidebar item type: {$item['type']}");
+            break;
+    }
+}
+```
+1. **Aquí se evalúa el tipo de ítem(`header`, `link`, `group`)**
+    - **Header**: solo renderiza un título/separador en el menú
+    - **Link**: crea un enlace con ícono, título y verificación si la ruta actual está activa (`request()->routeIs`).
+    - **Group**: Es un contenedor de subitems (ej: "Gestión" con `Usuarios`, `Roles`, etc)
+        - Aquí hay **recursividad**: cada subitem vuelve a pasar por  `parseItem()`. ESto permite que un grupo pueda contener más grupos, y así sucesivamente.
+2. **Crea una instancia de la clase correspondiente**
+    - Así cada tipo tiene su propio método `render()` y `authorize()`
+3. **Devuelve el objeto creado**
+    - `perseItem()` es un **factory method**: según el `type` decide qué clase instanciar.
+### 8. ItemGroup más en detalle
+En `ItemGroup::render()` hay esto:
+```php
+// app/Services/Sidebar/ItemGroup.php
+public function render(): string
+{
+    $items = array_filter($this->items, function ($item) {
+        return $item->authorize();
+    });
+
+    return view('sidebar.item-group', [
+        'title' => $this->title,
+        'icon' => $this->icon,
+        'active' => $this->active,
+        'items' => $items,
+    ])->render();
+}
+```
+1. **filtra subitems**:
+    - `$this->items` contiene los subítems agregados con `add()`.
+    - Usa `authorize()` para decidir si un ítem debe mostrarse o no (por ejemplo, permisos con Gates/Polices).
+2. **Renderiza una view parcial**:
+    - Llama a `view('sidebar.item-group', [...])->render()`
+    - Esto carga la blade `resources/views/sidebar/item-group.blade.php`, le pasa las variables y obtiene como resultado HTML listo pra insertarse en el sidebar.
+3. **Dentro de la view `sidebar/item-group.blade.php` está lo siguiente**
+```php
+// resources/views/sidebar/item-group.blade.php
+<div x-data="{ open: {{ $active ? 'true' : 'false' }} }">
+    <button type="button"
+        class="flex items-center w-full p-2 ..."
+        @click="open = !open">
+        
+        <span class="size-6 inline-flex justify-center items-center">
+            <i class="{{ $icon }}"></i>
+        </span>
+
+        <span class="flex-1 ms-3 text-left">{{ $title }}</span>
+
+        <i :class="{
+            'fa-solid fa-chevron-up': open,
+            'fa-solid fa-chevron-down': !open
+        }"></i>
+    </button>
+
+    <ul x-show="open" x-cloak class="py-2 space-y-2">
+        @foreach ($items as $item)
+            <li class="pl-4">
+                {!! $item->render() !!}
+            </li>
+        @endforeach
+    </ul>
+</div>
+```
+1. `x-data="{ open: true|false }"`
+    - Alpine.js inicializa un estado local `open`.
+    - si `$active` viene en `true` (la ruta actual coincide con el grupo) el menú se muestra abierto por defecto.
+2. `button`
+    - Buestra el título del grupo + ícono.
+    - `@click="open = !open` cambia el valor de `open`, alternando abierto/cerrado.
+3. El ícono de flecha `<i>`
+    - Usa `:class` para alternar dinámicamente el ícono según el estado de `open`.
+    - Si está abierto -> `fa-chevron-up`. si está cerrado -> `fa-chevron-down`
+4. El `<ul>` con subítems
+    - `x-show="open"`: solo se muestra si `open` es `true`
+    - `x-cloak`: evita que se vea antes de que alpinejs inicialice
+    - itera `$items` y llama a su `render()`, que puede ser un `ItemLink` o incluso otro grupo.
+5. **Resumen**
+- Permite tener menús colapsables dentro del sidebar.
+- Los grupos pueden contener varios enlaces relacionados.
+- Gracias a Alpine.js, todo funciona en el frontend sin necesidad de recargar la página.
+- Gracias al Composite Pattern, un grupo puede contener otros grupos o enlaces, y todos saben cómo renderizarse a sí mismos.
+6. **Flujo completo**
+1. `config/sidebar.php` → define un ítem de tipo `group`.
+2. `SidebarComposer::parseItem()` -> crea un `ItemGroup`.
+3. `ItemGroup::add()` -> le mete subitems (`ItemLink`, `ItemHeader`, etc.).
+4. `ItemGroup::render()` → carga la Blade `sidebar/item-group.blade.ph`.
+5. En la Blade, Alpine.js controla abrir/cerrar el grupo dinámicamente.
 

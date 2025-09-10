@@ -5,6 +5,7 @@ namespace App\Services\Sidebar;
 use App\Services\Sidebar\ItemSidebar;
 use Illuminate\Support\Facades\Gate;
 
+// C63: Refacorizar Sidebar
 class ItemLink implements ItemSidebar
 {
 

@@ -2,6 +2,7 @@
 
 namespace App\Services\Sidebar;
 
+// C63: Refacorizar Sidebar
 class ItemHeader implements ItemSidebar
 {
     private string $title;

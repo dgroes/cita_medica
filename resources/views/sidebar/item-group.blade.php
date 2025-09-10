@@ -1,4 +1,5 @@
 {{-- Para mostár le menú abierto o cerrado --}}
+{{-- C63: Refacorizar Sidebar --}}
 <div x-data="{
     open: {{ $active ? 'true' : 'false' }}
 }">

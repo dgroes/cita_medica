@@ -16,7 +16,7 @@ return [
         'can' => [
             'read_role',
             'read_user',
-            'read_paciente',
+            'read_patient',
             'read_doctor',
             'read_appointment',
             'read_calendar',
@@ -49,7 +49,7 @@ return [
         'route' => 'admin.patients.index',
         'active' => 'admin.patients.*',
         'can' => [
-            'read_paciente'
+            'read_patient'
         ]
     ],
     [

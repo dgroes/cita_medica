@@ -169,4 +169,39 @@ Donde `5` será el ID del usuario autenticado, lo mismo pasaría en paciente.
 Lo genial como se mencionó es que cada vez que se ejecuta una consulta sobre `Appointment` se aplica el scope, entonces funcionará internamente en: 
 - `Admin/AppointmentController.php`: Restringiendo las `id` de las `URL` para que se puedan acceder a las consultas del propio doctor. Por ejemplo si la ruta de `Editar/Cita` es: `http://127.0.0.1:8000/admin/appointments/1/edit`. Solo podrá acceder a dicha ruta el Doctor de dicha consulta. 
 - `Datatables/AppointmentTable.php`: Aquí solo se visualizarán las filas del doctor o paciente logeado, "no todos los resultados como si pasaría con Admin".
+## C67: Permiso por Rol
+Como se está utilizando el paquete `spatie/laravel-permission`. En el **ServiceProviders** se agregan varias directivas para su uso en Blade: 
+- `@role('admin') ... @endrole`
+- `@hasrole('admin') ... @endhasrole`
+- `@hasanyrole('admin|editor') ... @endhasanyrole`
+- `@hasallroles('admin|editor') ... @endhasallroles`
+Ejemplo de uso:
+```php
+@role('admin')
+    <p>Este texto solo lo ve un administrador.</p>
+@endrole
 
+@hasrole('editor')
+    <p>Solo lo ve un editor.</p>
+@endhasrole
+
+@hasanyrole('admin|editor')
+    <p>Lo ven administradores y editores.</p>
+@endhasanyrole
+```
+En el caso del proyecto se hace el uso de `@role` en:
+```php
+// resources/views/admin/appointments/show.blade.php
+@role('Doctor')
+    <hr class="my-6">
+    <div>
+        <h3 class="text-lg font-semibold text-gray-800 mb-2">
+            Notas le médico:
+        </h3>
+        <p>
+            {{ $appointment->consultation->notes ?? 'No hay notas'}}
+        </p>
+    </div>
+@endrole
+```
+Aquí esta sección solo la podrá visualizar el "Doctor", pero no estaría del todo mal usar `hasanyrole` y que sea accesible por un doctor y el admin, así: `@hasanyrole('Doctor|Admin')`.

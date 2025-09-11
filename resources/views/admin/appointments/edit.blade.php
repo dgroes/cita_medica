@@ -12,6 +12,20 @@
     ],
 ]">
 
+    {{-- Botón de cancelación de la cita --}}
+    <x-slot name="action">
+        <form action="{{ route('admin.appointments.destroy', $appointment) }}" method="POST">
+
+            @csrf
+            @method('DELETE')
+
+            <x-wire-button red type="submit" sm>
+                Cancelar cita
+            </x-wire-button>
+
+        </form>
+    </x-slot>
+
     <x-wire-card class="mb-4">
         <div class="flex items-ceter justify-between">
             <div>
@@ -31,10 +45,7 @@
             </div>
 
             <div>
-                 <x-wire-badge
-                    flat
-                    :color="$appointment->status->color()"
-                    :label="$appointment->status->label()" />
+                <x-wire-badge flat :color="$appointment->status->color()" :label="$appointment->status->label()" />
             </div>
 
         </div>
@@ -43,9 +54,17 @@
 
 
     {{-- Tabla --}}
-    @livewire('admin.appointment-manager', [
-        'appointmentEdit' => $appointment,
-    ])
+    @if ($appointment->status->isEditable())
+        @livewire('admin.appointment-manager', [
+            'appointmentEdit' => $appointment,
+        ])
+    @else
+        <x-wire-card class="mt-4">
+            <p class="text-sm text-slate-500">
+                Esta cita no se puede editar porque ya ha sido <strong>completada</strong> o <strong>cancelada</strong>
+            </p>
+        </x-wire-card>
+    @endif
 
 
 </x-admin-layout>

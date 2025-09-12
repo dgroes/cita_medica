@@ -1,6 +1,6 @@
 <x-admin-layout title="Pacientes | CitasMédicas" :breadcrumbs="[
     [
-        'name' => 'Dashboard',
+        'name' => 'Gestión',
         'href' => route('admin.dashboard'),
     ],
     [

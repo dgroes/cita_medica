@@ -20,13 +20,20 @@ class DoctorScheduleSeeder extends Seeder
         $doctors = Doctor::all();
 
         foreach ($doctors as $doctor) {
-            // Recorremos los días de la semana (0=domingo, 6=sábado)
-            foreach (range(1, 6) as $day) { // lunes a viernes
-                // Hora inicial
-                $start = Carbon::createFromTime(8, 0, 0); // 08:00
-                $end   = Carbon::createFromTime(17, 0, 0); // 17:00
+            // recorrer los días de la semana (1=lunes, 6=sábado)
 
-                // Generamos intervalos de 15 minutos
+            foreach (range(1, 6) as $day) { // lunes a sábado
+
+                // Obtener los horarios desde la configuración
+                $startTime = config('schedule.start_time');
+                $endTime = config('schedule.end_time');
+                $appointmentDuration = config('schedule.appointment_duration');
+
+                // Convertir a objetos Carbon
+                $start = Carbon::createFromTimeString($startTime);
+                $end = Carbon::createFromTimeString($endTime);
+
+                // Generar intervalos de acuerdo a la duración configurada
                 while ($start->lt($end)) {
                     Schedule::create([
                         'doctor_id'   => $doctor->id,
@@ -34,8 +41,8 @@ class DoctorScheduleSeeder extends Seeder
                         'start_time'  => $start->format('H:i:s'),
                     ]);
 
-                    // Avanzamos 15 minutos
-                    $start->addMinutes(15);
+                    // Se avanza según la duración configurada
+                    $start->addMinutes($appointmentDuration);
                 }
             }
         }

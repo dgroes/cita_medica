@@ -27,7 +27,7 @@ class AppointmentSeeder extends Seeder
 
         $now = Carbon::now();
 
-        foreach (range(1, 100) as $i) { // 100 citas de ejemplo
+        foreach (range(1, 150) as $i) { // 150 Citas
             $doctor  = $doctors->random();
             $patient = $patients->random();
 
@@ -38,7 +38,7 @@ class AppointmentSeeder extends Seeder
             } while ($date->isSunday()); // excluye domingos
 
             // Hora aleatoria (08:00 - 16:45 en bloques de 15 min)
-            $startHour   = rand(8, 16);
+            $startHour   = rand(8, 17);
             $startMinute = [0, 15, 30, 45][array_rand([0, 15, 30, 45])];
             $start       = Carbon::createFromTime($startHour, $startMinute, 0, $date->timezone)
                 ->setDate($date->year, $date->month, $date->day);

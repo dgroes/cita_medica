@@ -209,6 +209,24 @@ class UserSeeder extends Seeder
                 'phone' => '56978887766',
                 'address' => 'Tierras del Norte Salvaje',
             ],
+            // Usuarios reservada para Recepcionistas (id:25 - id:26)
+            [
+                'name' => 'Aemon Targaryen',
+                'email' => 'aemon@gmail.com',
+                'password' => bcrypt('aemon1234'),
+                'dni' => '42789001-3',
+                'phone' => '56900991843',
+                'address' => 'El Muro, Guardia de la Noche, Poniente'
+            ],
+            [
+                'name' => 'Daeron Targaryen',
+                'email' => 'daeron@gmail.com',
+                'password' => bcrypt('dareon1234'),
+                'dni' => '199146438',
+                'phone' => '56940508646',
+                'address' => 'Desembarco del Rey, Poniente'
+
+            ]
 
         ];
 
@@ -222,6 +240,13 @@ class UserSeeder extends Seeder
                 $user->assignRole('Admin');
                 continue;
             }
+
+            // Recepcionistas
+            if (in_array($user->email, ['aemon@gmail.com', 'daeron@gmail.com'])) {
+                $user->assignRole('Recepcionista');
+                continue;
+            }
+
 
             if ($index < 9) {
                 $user->assignRole('Doctor');

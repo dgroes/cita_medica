@@ -8,6 +8,6 @@
     ],
 ]">
 
-@livewire('admin.datatables.doctor-table');
+@livewire('admin.datatables.doctor-table')
 
 </x-admin-layout>

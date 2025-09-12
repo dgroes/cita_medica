@@ -14,7 +14,35 @@ class UserSeeder extends Seeder
     public function run(): void
     {
         $users = [
-            // Usuarios reservados para Doctores (id:1 - id:9)
+            // Usuario Reservado para Administrador (Admin) con id: 1
+            [
+                'name' => 'Davos Seaworth',
+                'email' => 'davos@gmail.com',
+                'password' => bcrypt('davos1234'),
+                'dni' => '15721152-6',
+                'phone' => '56974115962',
+                'address' => 'Puerto Blanco, Norte, Poniente',
+            ],
+            // Usuarios reservada para Recepcionistas (id:2 y id:3)
+            [
+                'name' => 'Aemon Targaryen',
+                'email' => 'aemon@gmail.com',
+                'password' => bcrypt('aemon1234'),
+                'dni' => '42789001-3',
+                'phone' => '56900991843',
+                'address' => 'El Muro, Guardia de la Noche, Poniente'
+            ],
+            [
+                'name' => 'Daeron Targaryen',
+                'email' => 'daeron@gmail.com',
+                'password' => bcrypt('dareon1234'),
+                'dni' => '199146438',
+                'phone' => '56940508646',
+                'address' => 'Desembarco del Rey, Poniente'
+
+            ],
+
+            // Usuarios reservados para Doctores (id:4 - id:11)
             [
                 'name' => 'Sandor Clegane',
                 'email' => 'sandor@gmail.com',
@@ -63,14 +91,7 @@ class UserSeeder extends Seeder
                 'phone' => '56974523688',
                 'address' => 'Isla de Tarth, Tierras de la Tormenta, Poniente',
             ],
-            [
-                'name' => 'Davos Seaworth',
-                'email' => 'davos@gmail.com',
-                'password' => bcrypt('davos1234'),
-                'dni' => '15721152-6',
-                'phone' => '56974115962',
-                'address' => 'Puerto Blanco, Norte, Poniente',
-            ],
+
             [
                 'name' => 'Catelyn Stark',
                 'email' => 'catelyn@gmail.com',
@@ -88,7 +109,7 @@ class UserSeeder extends Seeder
                 'address' => 'Valle de Arryn, Poniente',
             ],
 
-            // Usuarios reservada para Pacientes (id:10 - id:24)
+            // Usuarios reservada para Pacientes (id:12 - id:46)
             [
                 'name' => 'Stannis Baratheon',
                 'email' => 'stannis@gmail.com',
@@ -209,24 +230,167 @@ class UserSeeder extends Seeder
                 'phone' => '56978887766',
                 'address' => 'Tierras del Norte Salvaje',
             ],
-            // Usuarios reservada para Recepcionistas (id:25 - id:26)
+            // Aquí
             [
-                'name' => 'Aemon Targaryen',
-                'email' => 'aemon@gmail.com',
-                'password' => bcrypt('aemon1234'),
-                'dni' => '42789001-3',
-                'phone' => '56900991843',
+                'name' => 'Benjen Stark',
+                'email' => 'benjen@gmail.com',
+                'password' => bcrypt('benjen1234'),
+                'dni' => '42789002-1',
+                'phone' => '56900991844',
                 'address' => 'El Muro, Guardia de la Noche, Poniente'
             ],
             [
-                'name' => 'Daeron Targaryen',
-                'email' => 'daeron@gmail.com',
-                'password' => bcrypt('dareon1234'),
-                'dni' => '199146438',
-                'phone' => '56940508646',
-                'address' => 'Desembarco del Rey, Poniente'
-
-            ]
+                'name' => 'Jojen Reed',
+                'email' => 'jojen@gmail.com',
+                'password' => bcrypt('jojen1234'),
+                'dni' => '42789002-2',
+                'phone' => '56900991845',
+                'address' => 'Atalaya de Aguasgrises, El Cuello, Poniente'
+            ],
+            [
+                'name' => 'Meera Reed',
+                'email' => 'meera@gmail.com',
+                'password' => bcrypt('meera1234'),
+                'dni' => '42789002-3',
+                'phone' => '56900991846',
+                'address' => 'Atalaya de Aguasgrises, El Cuello, Poniente'
+            ],
+            [
+                'name' => 'Euron Greyjoy',
+                'email' => 'euron@gmail.com',
+                'password' => bcrypt('euron1234'),
+                'dni' => '42789002-4',
+                'phone' => '56900991847',
+                'address' => 'Islas del Hierro, Trono de Piedramar'
+            ],
+            [
+                'name' => 'Balon Greyjoy',
+                'email' => 'balon@gmail.com',
+                'password' => bcrypt('balon1234'),
+                'dni' => '42789002-5',
+                'phone' => '56900991848',
+                'address' => 'Islas del Hierro, Pyke'
+            ],
+            [
+                'name' => 'Victarion Greyjoy',
+                'email' => 'victarion@gmail.com',
+                'password' => bcrypt('victarion1234'),
+                'dni' => '42789002-6',
+                'phone' => '56900991849',
+                'address' => 'Islas del Hierro, Puerto Noble'
+            ],
+            [
+                'name' => 'Rodrik Cassel',
+                'email' => 'rodrik@gmail.com',
+                'password' => bcrypt('rodrik1234'),
+                'dni' => '42789002-7',
+                'phone' => '56900991850',
+                'address' => 'Invernalia, El Norte'
+            ],
+            [
+                'name' => 'Jory Cassel',
+                'email' => 'jory@gmail.com',
+                'password' => bcrypt('jory1234'),
+                'dni' => '42789002-8',
+                'phone' => '56900991851',
+                'address' => 'Invernalia, El Norte'
+            ],
+            [
+                'name' => 'Roose Bolton',
+                'email' => 'roose@gmail.com',
+                'password' => bcrypt('roose1234'),
+                'dni' => '42789002-9',
+                'phone' => '56900991852',
+                'address' => 'Fuerte Terror, El Norte'
+            ],
+            [
+                'name' => 'Ramsay Bolton',
+                'email' => 'ramsay@gmail.com',
+                'password' => bcrypt('ramsay1234'),
+                'dni' => '42789003-0',
+                'phone' => '56900991853',
+                'address' => 'Fuerte Terror, El Norte'
+            ],
+            [
+                'name' => 'Walder Frey',
+                'email' => 'walder@gmail.com',
+                'password' => bcrypt('walder1234'),
+                'dni' => '42789003-1',
+                'phone' => '56900991854',
+                'address' => 'Los Gemelos, El Tridente'
+            ],
+            [
+                'name' => 'Brynden Tully',
+                'email' => 'brynden@gmail.com',
+                'password' => bcrypt('brynden1234'),
+                'dni' => '42789003-2',
+                'phone' => '56900991855',
+                'address' => 'Riverrun, El Tridente'
+            ],
+            [
+                'name' => 'Edmure Tully',
+                'email' => 'edmure@gmail.com',
+                'password' => bcrypt('edmure1234'),
+                'dni' => '42789003-3',
+                'phone' => '56900991856',
+                'address' => 'Riverrun, El Tridente'
+            ],
+            [
+                'name' => 'Loras Tyrell',
+                'email' => 'loras@gmail.com',
+                'password' => bcrypt('loras1234'),
+                'dni' => '42789003-4',
+                'phone' => '56900991857',
+                'address' => 'Altojardín, El Dominio'
+            ],
+            [
+                'name' => 'Margaery Tyrell',
+                'email' => 'margaery@gmail.com',
+                'password' => bcrypt('margaery1234'),
+                'dni' => '42789003-5',
+                'phone' => '56900991858',
+                'address' => 'Altojardín, El Dominio'
+            ],
+            [
+                'name' => 'Olenna Tyrell',
+                'email' => 'olenna@gmail.com',
+                'password' => bcrypt('olenna1234'),
+                'dni' => '42789003-6',
+                'phone' => '56900991859',
+                'address' => 'Altojardín, El Dominio'
+            ],
+            [
+                'name' => 'Doran Martell',
+                'email' => 'doran@gmail.com',
+                'password' => bcrypt('doran1234'),
+                'dni' => '42789003-7',
+                'phone' => '56900991860',
+                'address' => 'Lanza del Sol, Dorne'
+            ],
+            [
+                'name' => 'Trystane Martell',
+                'email' => 'trystane@gmail.com',
+                'password' => bcrypt('trystane1234'),
+                'dni' => '42789003-8',
+                'phone' => '56900991861',
+                'address' => 'Lanza del Sol, Dorne'
+            ],
+            [
+                'name' => 'Ellaria Sand',
+                'email' => 'ellaria@gmail.com',
+                'password' => bcrypt('ellaria1234'),
+                'dni' => '42789003-9',
+                'phone' => '56900991862',
+                'address' => 'Lanza del Sol, Dorne'
+            ],
+            [
+                'name' => 'Quentyn Martell',
+                'email' => 'quentyn@gmail.com',
+                'password' => bcrypt('quentyn1234'),
+                'dni' => '42789004-0',
+                'phone' => '56900991863',
+                'address' => 'Lanza del Sol, Dorne'
+            ],
 
         ];
 
@@ -248,7 +412,7 @@ class UserSeeder extends Seeder
             }
 
 
-            if ($index < 9) {
+            if ($index < 11) {
                 $user->assignRole('Doctor');
             } else {
                 $user->assignRole('Paciente');

@@ -28,10 +28,11 @@ class DashboardController extends Controller
             // Total de doctores
             $data['total_doctors'] = Doctor::count();
 
-            // Cantidad de citas de hoy
-            $data['appointments_today'] = Appointment::whereDate('created_at', now())
-                ->where('status', '!=', AppointmentEnum::SCHEDULED)
+            // Cantidad de citas de hoy (solo programadas)
+            $data['appointments_today'] = Appointment::whereDate('date', now())
+                ->where('status', AppointmentEnum::SCHEDULED)
                 ->count();
+
 
             // Ultimos usuarios registrados
             $data['recent_users'] = User::latest()
@@ -45,34 +46,39 @@ class DashboardController extends Controller
         if (auth()->user()->hasRole('Doctor')) {
 
             // Citas totales de hoy
-            $data['appointments_today_count'] = Appointment::whereDate('created_at', now())
+            // Citas totales de hoy (solo programadas)
+            $data['appointments_today_count'] = Appointment::whereDate('date', now())
                 ->where('status', AppointmentEnum::SCHEDULED)
                 ->whereHas('doctor', function ($query) {
                     $query->where('user_id', auth()->id());
                 })->count();
 
+
             // Citas de la semana
-            $data['appointments_week_count'] = Appointment::whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])
+            $data['appointments_week_count'] = Appointment::whereBetween('date', [now()->startOfWeek(), now()->endOfWeek()])
                 ->where('status', AppointmentEnum::SCHEDULED)
                 ->whereHas('doctor', function ($query) {
                     $query->where('user_id', auth()->id());
                 })->count();
+
 
             // Proxima cita
             $data['next_appointment'] = Appointment::whereHas('doctor', function ($query) {
                 $query->where('user_id', auth()->id());
             })
                 ->where('status', AppointmentEnum::SCHEDULED)
-                ->whereDate('date', '>=', now())
+                ->whereDate('date', '>=', now()->toDateString())
                 ->whereTime('end_time', '>=', now()->toTimeString())
+                ->orderBy('date')
                 ->orderBy('start_time')
                 ->first();
+
 
             $data['appointments_today'] = Appointment::whereHas('doctor', function ($query) {
                 $query->where('user_id', auth()->id());
             })
                 ->where('status', AppointmentEnum::SCHEDULED)
-                ->whereDate('date', '>=', now())
+                ->whereDate('date', now()->toDateString())
                 ->whereTime('end_time', '>=', now()->toTimeString())
                 ->orderBy('start_time')
                 ->get();

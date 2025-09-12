@@ -1,6 +1,6 @@
 <x-admin-layout title="Dashboard | Citas médicas">
 
-    @role('Admin')
+    @role('Admin|Recepcionista')
         {{-- Llamado a: `resources/views/admin/dashboard/admin.blade.php` --}}
         @include('admin.dashboard.admin')
     @endrole

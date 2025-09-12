@@ -21,7 +21,7 @@ class DashboardController extends Controller
         $data = [];
 
         // Acceso de los datos para Admin y Recepcionista:
-        if (auth()->user()->hasRole('Admin')) {
+        if (auth()->user()->hasRole('Admin|Recepcionista')) {
             // Total de pacientes
             $data['total_patients'] = Patient::count();
 

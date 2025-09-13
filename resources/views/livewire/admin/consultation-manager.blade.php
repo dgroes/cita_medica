@@ -211,7 +211,7 @@
                     <div>
                         <p class="font-semibold text-gray-800 flex items-center">
                             <i class="fa-solid fa-calendar-days text-gray-500 mr-2"></i>
-                            {{ $consultation->appointment->date->format('d/m/Y H:i') }}
+                            {{ $consultation->appointment->date->format('d/m/Y') }}
                         </p>
 
                         <p>

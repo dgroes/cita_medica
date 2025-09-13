@@ -27,7 +27,7 @@ class AppointmentSeeder extends Seeder
 
         $now = Carbon::now();
 
-        foreach (range(1, 150) as $i) { // 150 Citas
+        foreach (range(1, 90) as $i) { // 90 Citas
             $doctor  = $doctors->random();
             $patient = $patients->random();
 

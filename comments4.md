@@ -205,3 +205,13 @@ En el caso del proyecto se hace el uso de `@role` en:
 @endrole
 ```
 Aquí esta sección solo la podrá visualizar el "Doctor", pero no estaría del todo mal usar `hasanyrole` y que sea accesible por un doctor y el admin, así: `@hasanyrole('Doctor|Admin')`.
+## C68: Generación de consultas (seeds)
+Para la población de la BD con datos genericos para las consultas se han creado estós dos ficheros:
+- `database/seeders/DoctorScheduleSeeder.php`
+- `database/seeders/AppointmentSeeder.php`
+01. El primero fichero `DoctorScheduleSeeder`, **esta semilla genera los horarios de los doctores del sistema**. Para ello está en considereación:
+- Horario laboral de Lunes a Sabado (*Para tener más datos a la muestra de ejemplo*)
+- Se establece los horarios de inicio y termino laboral (en base a `config/schedule.php`).
+- La genaración de los intervalos de los 15 minutos (en base a `config/schedule.php`).
+Con esto se crea la generación para los horarios de **todos los doctores**
+02. En este segundo fichero `AppointmentSeeder` está la generación de citas médicas junto con su cita. Esto úlitmo es importante porqué una cita debe crearce al crerse una consulta. 

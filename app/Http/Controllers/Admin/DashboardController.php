@@ -84,6 +84,26 @@ class DashboardController extends Controller
                 ->get();
         }
 
+        // Acceso de los datos para un paciente
+        if (auth()->user()->hasRole('Paciente')) {
+            // Proxima cita de paciente
+            $data['next_appointment'] = Appointment::whereHas('patient', function ($query) {
+                $query->where('user_id', auth()->id());
+            })
+                /*  ->where('status', AppointmentEnum::SCHEDULED)
+                ->whereDate('date', '>=', now()->toDateString())
+                ->orderBy('date') */
+                ->latest()
+                ->first();
+
+            $data['past_appointment'] = Appointment::whereHas('patient', function ($query) {
+                $query->where('user_id', auth()->id());
+            })
+                ->latest()
+                ->take(5)
+                ->get();
+        }
+
         return view('admin.dashboard', compact('data'));
     }
 }

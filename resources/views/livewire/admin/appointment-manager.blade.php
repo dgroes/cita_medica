@@ -152,10 +152,20 @@
 
                         <hr class="my-5">
                         <div class="space-y-6">
-
-                            <x-wire-select label="Paciente" placeholder="Selecciona un paciente" :async-data="route('api.patients.index')"
-                                wire:model="appointment.patient_id" icon="user" option-label="name" :disabled="isset($appointmentEdit)"
+                            {{-- Mostrar la seleccion de paciente solo a los que no son de rol Paciente --}}
+                            @if (!$appointmentEdit && !auth()->user()->hasRole('Paceinte'))
+                                 <x-wire-select
+                                 label="Paciente"
+                                 placeholder="Selecciona un paciente"
+                                 :async-data="route('api.patients.index')"
+                                wire:model="appointment.patient_id"
+                                icon="user"
+                                option-label="name"
+                                :disabled="isset($appointmentEdit)"
                                 option-value="id" />
+                            @endif
+
+                            {{-- Motivo de la consulta --}}
                             <x-wire-textarea
                                 wire:model="appointment.reason"
                                 label="Motivo de la cita"
@@ -163,6 +173,7 @@
                                 rows="3"
                                 />
 
+                            {{-- Botón de agendar consulta --}}
                             <x-wire-button
                                 wire:click="save"
                                 spinner="save"

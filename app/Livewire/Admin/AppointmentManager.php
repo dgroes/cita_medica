@@ -54,6 +54,11 @@ class AppointmentManager extends Component
         if ($this->appointmentEdit) {
             $this->appointment['patient_id'] = $this->appointmentEdit->patient_id;
         }
+
+        // Verificar si es un paciente.
+        if(auth()->user()->hasRole('Paciente')){
+            $this->appointment['patient_id'] = auth()->user()->patient->id;
+        }
     }
 
     // Escuchar cambios en selectedSchedules

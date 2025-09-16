@@ -138,6 +138,8 @@
                             slotMinTime: "{{ config('schedule.start_time') }}",
                             slotMaxTime: "{{ config('schedule.end_time') }}",
 
+                            hiddenDays: [0], // 👈 Esto oculta el domingo
+
                             events: {
                                 url: '{{ route('api.appointments.index') }}',
                                 failure: function() {

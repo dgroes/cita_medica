@@ -15,3 +15,25 @@ body{
     background-color: #f4f4f4;
 }
 
+/* Estilo para los botones de FullCalendar */
+.fc .fc-button {
+    background-color: #6366f1; /* Tailwind blue-600 */
+    color: white;
+    border-color: #6366f1;
+    padding: 0.25rem 0.75rem;
+}
+
+.fc .fc-button:hover {
+    background-color: #4f46e5; /* blue-700 */
+}
+
+.fc .fc-button.fc-button-active,
+.fc .fc-button[aria-pressed="true"],
+.fc-theme-standard .fc-button[aria-pressed="true"],
+.fc .fc-button:active,
+.fc .fc-button:focus {
+  background-color: #433db3 !important; /* green-600 */
+  color: #ffffff !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
